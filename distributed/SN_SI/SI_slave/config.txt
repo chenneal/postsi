@@ -1,0 +1,10 @@
+masterip: 127.0.0.1
+masterport: 8000
+messageport: 8001
+paramport: 8002
+nodeid: 0
+nodeip0: 127.0.0.1
+nodeip1: 127.0.0.1
+nodeip2: 127.0.0.1
+nodeip3: 127.0.0.1
+nodeip4: 127.0.0.1

@@ -1,0 +1,7 @@
+masterip: 127.0.0.1
+masterport: 8000
+messageport: 8001
+paramport: 8002
+nodenum: 1
+threadnum: 1
+clientport: 4000
