@@ -66,12 +66,10 @@ Size InvisibleTableOffset(int row, int column) {
  * @input: 'IsRead': 'true' means the invisible tuple is inserted by transaction's read,
  * 'false' means the invisible tuple is inserted by transaction's update.
  */
-//void ConflictTableInsert(TransConf* transconf,int row_index,int column_index)
 void InvisibleTableInsert(int row_index, int column_index, TransactionId tid)
 {
 	TransConf* location;
 
-	//offset = ConflictTableOffset(row, column);
 	location = (TransConf*) InvisibleTableLocate(row_index,column_index);
 
 	*location = tid;
@@ -81,10 +79,8 @@ void InvisibleTableInsert(int row_index, int column_index, TransactionId tid)
  * reset the (row,column)'s conflict transaction tuple to invalid tuple.
  */
 void InvisibleTableReset(int row, int column) {
-	//Size offset;
 	TransConf* location;
 
-	//offset = ConflictTableOffset(row, column);
 	location = (TransConf*) InvisibleTableLocate(row,column);
 
 	*location = ConfFalse;
@@ -101,11 +97,7 @@ TransConf* InvisibleTableLocate(int row, int column) {
 
 	offset = InvisibleTableOffset(row, column);
 	transconf = (TransConf*) ((char*) TransConfTable + offset);
-/*
-	if (!TransactionIdIsValid(
-			transconf->fromId) || !TransactionIdIsValid(transconf->toId))
-		return NULL;
-*/
+
 	return transconf;
 }
 
@@ -116,7 +108,6 @@ bool IsPairInvisible(int row, int column, TransactionId* tid)
 {
 	*tid=*(InvisibleTableLocate(row,column));
 
-	//return (*(InvisibleTableLocate(row,column)) != InvalidTransactionId) ? true:false;
 	return (*tid != InvalidTransactionId) ? true : false;
 }
 
@@ -143,9 +134,6 @@ CommitId GetTransactionCid(int index,CommitId cid_min)
 	int status;
 
 	TransactionId rtid;
-	//TransactionId* OldReadList=NULL;
-
-	//OldReadList=(TransactionId*)pthread_getspecific(OldReadListKey);
 
 	lindex = GetLocalIndex(index);
 	for(i=0;i<MAXPROCS;i++)
@@ -162,12 +150,12 @@ CommitId GetTransactionCid(int index,CommitId cid_min)
 
 			if(status)
 			{
-				//transaction by 'rtid' is still in running, else overflow it.
+				// transaction by 'rtid' is still in running, else overflow it.
 				cid=(cid<sid_min)?sid_min:cid;
 			}
 			else
 			{
-				//transaction by 'rtid' has finished, reset the invisible-table.
+				// transaction by 'rtid' has finished, reset the invisible-table.
 				ResetPairInvisible(lindex, i);
 			}
 		}
@@ -206,18 +194,13 @@ int CommitInvisibleUpdate(int index,StartId sid, CommitId cid)
 	int i;
     bool is_abort = false;
     int status;
-	//current transaction by cid has to rollback.
-	/*
-	if(IsConflictRollback(index,cid))
-		return 1;
-	*/
+	// current transaction by cid has to rollback.
 	int lindex;
 	int nid;
 	TransactionId tid;
 
 	lindex = GetLocalIndex(index);
-	//current transaction can succeed in committing, so update
-	//other transaction by invisible transaction pair.
+	// current transaction can succeed in committing, so update other transaction by invisible transaction pair.
 	for(i=0;i<MAXPROCS;i++)
 	{
 		if(IsPairInvisible(lindex,i,&tid))
@@ -230,7 +213,6 @@ int CommitInvisibleUpdate(int index,StartId sid, CommitId cid)
 			status = *(recv_buffer[lindex]);
 			if (status == 0)
 				is_abort = true;
-			//ResetPairInvisible(index,i);
 		}
 
 		if(IsPairInvisible(i,lindex,&tid))
@@ -240,7 +222,6 @@ int CommitInvisibleUpdate(int index,StartId sid, CommitId cid)
             	printf("update commit id send error\n");
 			if (Recv(lindex, nid, 1) == -1)
 				printf("update commit id recv error\n");
-			//ResetPairInvisible(i,index);
 		}
 	}
 	if(is_abort)
@@ -261,34 +242,11 @@ void AtEnd_InvisibleTable(int index)
 
 	lindex = GetLocalIndex(index);
 
-	//just need to clear local invisible-table.
+	// just need to clear local invisible-table.
 	for(i=0;i<MAXPROCS;i++)
 	{
 		ResetPairInvisible(lindex,i);
 		ResetPairInvisible(i,lindex);
 	}
-	/*
-	for(i=0;i<MAXPROCS;i++)
-	{
-		if (IsPairInvisible(lindex,i,&tid))
-		{
-		   nid = GetNodeId(i);
-		   if (Send3(lindex, nid, cmd_resetpair, index, i%THREADNUM) == -1)
-		      printf("reset pair send error\n");
-		   if (Recv(lindex, nid, 1) == -1)
-			  printf("reset pair recv error\n");
-		   ResetPairInvisible(lindex,i);
-		}
-		if (IsPairInvisible(i,lindex,&tid))
-		{
-		   nid = GetNodeId(i);
-		   if (Send3(lindex, nid, cmd_resetpair, i%THREADNUM, index) == -1)
-			  printf("reset pair send error\n");
-		   if (Recv(lindex, nid, 1) == -1)
-			  printf("reset pair recv error\n");
-		   ResetPairInvisible(i,lindex);
-		}
-	}
-	*/
 }
 

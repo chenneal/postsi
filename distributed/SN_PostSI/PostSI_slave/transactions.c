@@ -4,6 +4,7 @@
  *  Created on: Dec 16, 2015
  *      Author: xiaoxin
  */
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/time.h>
@@ -87,14 +88,14 @@ int LoadWhse(int numWarehouses)
 		w_id=i;
 		tuple_id=(TupleId)w_id;
 		value=0;
-		//printf("before insert.\n");
+
 		result=Data_Insert(table_id, tuple_id, value, node_id);
 		if(result==0)
 		{
 			printf("LoadWhse failed for %d.\n",i);
 			exit(-1);
 		}
-		//printf("after insert.\n");
+
 		k++;
 		if(k%configCommitCount==0)
 		{
@@ -105,9 +106,6 @@ int LoadWhse(int numWarehouses)
 			}
 			else
 			{
-				//current transaction has to rollback.
-				//to do here.
-				//we should know from which DataRecord to rollback.
 				AbortTransaction(index);
 			}
 			StartTransaction();
@@ -120,13 +118,9 @@ int LoadWhse(int numWarehouses)
 	}
 	else
 	{
-		//current transaction has to rollback.
-		//to do here.
-		//we should know from which DataRecord to rollback.
 		AbortTransaction(index);
 	}
 
-	//printf("LoadWhse: %ld rows loaded.\n",k);
 	return k;
 }
 
@@ -166,23 +160,17 @@ int LoadItem(int ItemCount)
 			exit(-1);
 		}
 		k++;
-		//printf("after insert %ld.\n",k);
 		if(k%configCommitCount==0)
 		{
 			result=PreCommit(&index);
-			//printf("after precommit.\n");
 			if(result == 1)
 			{
 				CommitTransaction();
 			}
 			else
 			{
-				//current transaction has to rollback.
-				//to do here.
-				//we should know from which DataRecord to rollback.
 				AbortTransaction(index);
 			}
-			//printf("begin another transaction.\n");
 			StartTransaction();
 		}
 	}
@@ -193,13 +181,9 @@ int LoadItem(int ItemCount)
 	}
 	else
 	{
-		//current transaction has to rollback.
-		//to do here.
-		//we should know from which DataRecord to rollback.
 		AbortTransaction(index);
 	}
 
-	//printf("LoadItem: %ld rows loaded.\n",k);
 	return k;
 }
 
@@ -249,7 +233,6 @@ int LoadStock(int numWarehouses, int ItemCount)
 				}
 				else
 				{
-					//we should know from which DataRecord to rollback.
 					AbortTransaction(index);
 				}
 				StartTransaction();
@@ -262,11 +245,9 @@ int LoadStock(int numWarehouses, int ItemCount)
 	}
 	else
 	{
-		//we should know from which DataRecord to rollback.
 		AbortTransaction(index);
 	}
 
-	//printf("LoadStock: %ld rows loaded.\n",k);
 	return k;
 }
 
@@ -316,7 +297,6 @@ int LoadDist(int numWarehouses, int DistPerWhse)
 				}
 				else
 				{
-					//we should know from which DataRecord to rollback.
 					AbortTransaction(index);
 				}
 				StartTransaction();
@@ -330,11 +310,9 @@ int LoadDist(int numWarehouses, int DistPerWhse)
 	}
 	else
 	{
-		//we should know from which DataRecord to rollback.
 		AbortTransaction(index);
 	}
 
-	//printf("LoadDist: %ld rows loaded.\n",k);
 	return k;
 }
 
@@ -369,11 +347,11 @@ int LoadCust(int numWarehouses, int DistPerWhse, int CustPerDist)
 				c_w_id=w;
 
 				cust_id=(TupleId)(c_id+c_w_id*CUST_ID+(TupleId)c_d_id*CUST_ID*WHSE_ID);
-				//to compute.
-				//discount from 1 to 5.
+				// to compute.
+				// discount from 1 to 5.
 				c_discount=RandomNumber(1,5);
 
-				if(RandomNumber(1,100) <= 90)//90% good credit.
+				if(RandomNumber(1,100) <= 90)// 90% good credit.
 				{
 					c_credit=1;
 				}
@@ -393,8 +371,6 @@ int LoadCust(int numWarehouses, int DistPerWhse, int CustPerDist)
 				h_w_id=w;
 				h_d_id=d;
 				h_amount=10;
-
-				//k+=2;
 
 				cust_value=(TupleId)(c_credit+(TupleId)c_discount*CUST_CREDIT+(TupleId)c_balance*CUST_CREDIT*CUST_DISCOUNT);
 
@@ -425,7 +401,6 @@ int LoadCust(int numWarehouses, int DistPerWhse, int CustPerDist)
 					}
 					else
 					{
-						//we should know from which DataRecord to rollback.
 						AbortTransaction(index);
 					}
 					StartTransaction();
@@ -438,11 +413,9 @@ int LoadCust(int numWarehouses, int DistPerWhse, int CustPerDist)
 	}
 	else
 	{
-		//we should know from which DataRecord to rollback.
 		AbortTransaction(index);
 	}
 
-	//printf("LoadCust: %ld rows loaded.\n",k);
 	return k;
 }
 
@@ -486,7 +459,6 @@ int LoadOrder(int numWarehouses, int DistPerWhse, int CustPerDist)
 				{
 					printf("LoadOrder failed for o_c_id:%d, o_w_id:%d, o_d_id:%d.\n",o_c_id, o_w_id, o_d_id);
 					validation(Order_ID);
-					//break;
 					exit(-1);
 				}
 
@@ -501,7 +473,6 @@ int LoadOrder(int numWarehouses, int DistPerWhse, int CustPerDist)
 					}
 					else
 					{
-						//we should know from which DataRecord to rollback.
 						AbortTransaction(index);
 					}
 					StartTransaction();
@@ -524,7 +495,6 @@ int LoadOrder(int numWarehouses, int DistPerWhse, int CustPerDist)
 					if(result==0)
 					{
 						printf("LoadnewOrder failed for no_o_id:%d, no_w_id:%d, no_d_id:%d.\n",no_o_id, no_w_id, no_d_id);
-						//break;
 						exit(-1);
 					}
 					Neworder_Count++;
@@ -539,7 +509,6 @@ int LoadOrder(int numWarehouses, int DistPerWhse, int CustPerDist)
 						}
 						else
 						{
-							//we should know from which DataRecord to rollback.
 							AbortTransaction(index);
 						}
 						StartTransaction();
@@ -587,7 +556,6 @@ int LoadOrder(int numWarehouses, int DistPerWhse, int CustPerDist)
 						}
 						else
 						{
-							//we should know from which DataRecord to rollback.
 							AbortTransaction(index);
 						}
 						StartTransaction();
@@ -602,18 +570,15 @@ int LoadOrder(int numWarehouses, int DistPerWhse, int CustPerDist)
 	}
 	else
 	{
-		//we should know from which DataRecord to rollback.
 		AbortTransaction(index);
 	}
 
-	//printf("LoadOrder: %ld rows loaded %d.\n",k, Neworder_Count);
 	return k;
 }
 
 /***************************Transaction Interface******************************/
 void executeTransactions(int numTransactions, int terminalWarehouseID, int terminalDistrictID, TransState* StateInfo)
 {
-	//int paymentWeight, orderStatusWeight, deliveryWeight, stockLevelWeight, limPerMin_Terminal;
 	int transactionWeight;
 	int i;
 	int result;
@@ -622,13 +587,6 @@ void executeTransactions(int numTransactions, int terminalWarehouseID, int termi
 
 	int count[5]={0};
 
-	//THREAD* threadinfo;
-
-	//threadinfo=(THREAD*)pthread_getspecific(ThreadInfoKey);
-
-	//terminalWarehouseID=threadinfo->index;
-
-	//getchar();
 	StateInfo->trans_commit=0;
 	StateInfo->trans_abort=0;
 	StateInfo->Delivery=0;
@@ -644,80 +602,22 @@ void executeTransactions(int numTransactions, int terminalWarehouseID, int termi
 	StateInfo->NewOrder_C=0;
 	StateInfo->Payment_C=0;
 	StateInfo->Stock_level_C=0;
-	/*
-	StateInfo->Payment_1=0;
-	StateInfo->Payment_2=0;
-	StateInfo->Payment_3=0;
-	StateInfo->Payment_4=0;
-	StateInfo->Payment_5=0;
-	StateInfo->Payment_6=0;
-	StateInfo->Payment_7=0;
-	StateInfo->Payment_8=0;
-	StateInfo->Payment_9=0;
-	StateInfo->Payment_10=0;
-	*/
+
 	for(i=0;i<numTransactions;i++)
 	{
 		transactionWeight=(int)RandomNumber(1, 100);
-		//transactionWeight=99;
 		newOrder=0;
-		//sleep(RandomNumber(1,2)-1);
-
-		//if(newOrderCount%1000==0)
-		//	getchar();
-		//result=executeTransaction(10, terminalWarehouseID, terminalDistrictID);
 
 		if(transactionWeight <= paymentWeightValue)
 		{
-			//sleep(RandomNumber(1, 3));
 			count[0]++;
 			result=executeTransaction(PAYMENT, terminalWarehouseID, terminalDistrictID);
 			StateInfo->Payment++;
 			if(result==0)
 			    StateInfo->Payment_C++;
-		    /*
-		    switch(result)
-		    {
-		    case 0:
-		    	StateInfo->Payment_C++;
-		    	break;
-		    case -1:
-		    	StateInfo->Payment_1++;
-		    	break;
-		    case -2:
-		    	StateInfo->Payment_2++;
-			//printf("payment result = -2\n");
-		    	break;
-		    case -3:
-		    	StateInfo->Payment_3++;
-		    	break;
-		    case -4:
-		    	StateInfo->Payment_4++;
-		    	break;
-		    case -5:
-		    	StateInfo->Payment_5++;
-		    	break;
-		    case -6:
-		    	StateInfo->Payment_6++;
-		    	break;
-		    case -7:
-		    	StateInfo->Payment_7++;
-		    	break;
-		    case -8:
-		    	StateInfo->Payment_8++;
-		    case -9:
-		    	StateInfo->Payment_9++;
-		    case -10:
-		    	StateInfo->Payment_10++;           
-		    	break;
-		    default:
-		    	printf("payment error\n");
-		    }
-	            */
 		}
 		else if(transactionWeight <= paymentWeightValue + stockLevelWeightValue)
 		{
-			//sleep(RandomNumber(1, 3));
 			count[1]++;
 			result=executeTransaction(STOCK_LEVEL, terminalWarehouseID, terminalDistrictID);
 			StateInfo->Stock_level++;
@@ -728,21 +628,18 @@ void executeTransactions(int numTransactions, int terminalWarehouseID, int termi
 		}
 		else if(transactionWeight <= paymentWeightValue + stockLevelWeightValue + orderStatusWeightValue)
 		{
-			//sleep(RandomNumber(1, 3));
 			count[2]++;
 			result=executeTransaction(ORDER_STATUS, terminalWarehouseID, terminalDistrictID);
 			StateInfo->Order_status++;
 		}
 		else if(transactionWeight <= paymentWeightValue + stockLevelWeightValue + orderStatusWeightValue + deliveryWeightValue)
 		{
-			//sleep(RandomNumber(1, 3));
 			count[3]++;
 			result=executeTransaction(DELIVERY, terminalWarehouseID, terminalDistrictID);
 			StateInfo->Delivery++;
 		}
 		else
 		{
-			//sleep(RandomNumber(1, 3));
 			count[4]++;
 			result=executeTransaction(NEW_ORDER, terminalWarehouseID, terminalDistrictID);
 			newOrderCount++;
@@ -751,39 +648,13 @@ void executeTransactions(int numTransactions, int terminalWarehouseID, int termi
 			if(result==0)
 				StateInfo->NewOrder_C++;
 		}
-
-		//getchar();
 		
 		if(result == 0)
 			StateInfo->trans_commit++;
 		else
 			StateInfo->trans_abort++;
 		
-		/*
-		switch(result)
-		{
-		case 0:
-			StateInfo->trans_commit++;
-			break;
-		case -1:
-			StateInfo->runabort++;
-			StateInfo->trans_abort++;
-			break;
-		case -2:
-			StateInfo->endabort++;
-			StateInfo->trans_abort++;
-			break;
-		default:
-			StateInfo->otherabort++;
-			StateInfo->trans_abort++;
-		}
-		*/
 	}
-	//for(i=0;i<5;i++)
-		//printf("%d: %d\n",i, count[i]);
-
-	//getchar();
-	//printf("commit %d transactions, abort %d transactions\n",StateInfo->trans_commit, StateInfo->trans_abort);
 }
 
 /*
@@ -793,7 +664,7 @@ int executeTransaction(TransactionsType type, int terminalWarehouseID, int termi
 {
 	int i;
 	int result;
-	//NEW_ORDER
+	// NEW_ORDER
 	int districtID, customerID, numItems;
 	int allLocal;
 	int itemIDs[15], supplierWarehouseIDs[15], orderQuantities[15];
@@ -817,17 +688,6 @@ int executeTransaction(TransactionsType type, int terminalWarehouseID, int termi
 
 	node_id[0]=nodeid;
 	node_used[nodeid]=1;
-	/*
-	for(i=1;i<node_num;i++)
-	{
-		do
-		{
-			nid=(int)RandomNumber(1,nodenum);
-		}while(node_used[nid-1]);
-		node_used[nid-1]=1;
-		node_id[i]=nid-1;
-	}
-	*/
 
 	for(i=1;i<node_num;i++)
 	{
@@ -925,7 +785,6 @@ int executeTransaction(TransactionsType type, int terminalWarehouseID, int termi
 		break;
 	default:
 		result=testTransaction(terminalWarehouseID, districtID);
-		//printf("executeTransaction: transaction type error.\n");
 	}
 	return result;
 }
@@ -935,8 +794,6 @@ int executeTransaction(TransactionsType type, int terminalWarehouseID, int termi
 int newOrderTransaction(int w_id, int d_id, int c_id, int o_ol_cnt, int o_all_local, int *itemIDs, int *supplierWarehouseIDs, int *orderQuantities, int* node_id, int node_num)
 {
 	StartTransaction();
-	//printf("new_order transaction start...\n");
-	//getchar();
 
 	TupleId whse_id, cust_id, whse_value, cust_value;
 	TupleId dist_id, dist_value;
@@ -989,7 +846,6 @@ int newOrderTransaction(int w_id, int d_id, int c_id, int o_ol_cnt, int o_all_lo
 	whse_id=(TupleId)w_id;
 	cust_id=(TupleId)(c_id+w_id*CUST_ID+(TupleId)d_id*CUST_ID*WHSE_ID);
 
-	//printf("before read.\n");
 	whse_value=Data_Read(Warehouse_ID, whse_id, node_id2, &flag);
 	if(flag==0)
 	{
@@ -999,12 +855,9 @@ int newOrderTransaction(int w_id, int d_id, int c_id, int o_ol_cnt, int o_all_lo
 	}
 	else if(flag<=-3)
 	{
-		//printf("stmtGetDist() readcollusion, dist_id=%ld\n",dist_id);
 		AbortTransaction(0);
 		return -1;
 	}
-	//printf("after read.\n");
-	//printf("Warehouse: %ld %ld\n",whse_id, whse_value);
 
 	cust_value=Data_Read(Customer_ID, cust_id, node_id3, &flag);
 	if(flag==0)
@@ -1012,16 +865,12 @@ int newOrderTransaction(int w_id, int d_id, int c_id, int o_ol_cnt, int o_all_lo
 		printf("stmtGetCustWhse() not found, cust_id=%ld\n",cust_id);
 		PrintTable(Customer_ID);
 		exit(-1);
-		//AbortTransaction(0);
-		//return -1;
 	}
 	else if(flag<=-3)
 	{
-		//printf("stmtGetDist() readcollusion, dist_id=%ld\n",dist_id);
 		AbortTransaction(0);
 		return -1;
 	}
-	//printf("Customer: %ld %ld\n",cust_id, cust_value);
 
 	//random value for 'c_discount, c_last, c_credit, w_tax'.
 	c_discount=(int)((cust_value/CUST_CREDIT)%CUST_DISCOUNT);
@@ -1040,16 +889,12 @@ int newOrderTransaction(int w_id, int d_id, int c_id, int o_ol_cnt, int o_all_lo
 			printf("stmtGetDist() not found, dist_id=%ld\n", dist_id);
 			PrintTable(District_ID);
 			exit(-1);
-			//AbortTransaction(0);
-			//return -1;
 		}
 		else if(flag<=-3)
 		{
-			//printf("stmtGetDist() readcollusion, dist_id=%ld\n",dist_id);
 			AbortTransaction(0);
 			return -1;
 		}
-		//printf("District: %ld %ld\n",dist_id, dist_value);
 
 		d_next_o_id=(int)(dist_value%ORDER_ID);
 
@@ -1058,13 +903,10 @@ int newOrderTransaction(int w_id, int d_id, int c_id, int o_ol_cnt, int o_all_lo
 			printf("d_next_o_id=%d, dist_value=%ld, dist_id=%ld, flag=%d\n",d_next_o_id, dist_value, dist_id, flag);
 			PrintTable(District_ID);
 			exit(-1);
-			//getchar();
 		}
 
 		//random value for 'd_tax'.
 		o_id=d_next_o_id;
-
-		//printf("new_order: o_id=%d\n", o_id);
 
 		//stmtInsertNewOrder
 		no_id=(TupleId)(o_id+(TupleId)w_id*ORDER_ID+(TupleId)d_id*ORDER_ID*WHSE_ID);
@@ -1085,10 +927,8 @@ int newOrderTransaction(int w_id, int d_id, int c_id, int o_ol_cnt, int o_all_lo
 	if(result == 0)
 	{
 		printf("stmtUpdateDist() update failed, dist_id=%ld\n",dist_id);
-		//PrintTable(District_ID);
 		exit(-1);
-		//AbortTransaction(0);
-		//return -1;
+
 	}
     else if(result < 0)
     {
@@ -1104,32 +944,21 @@ int newOrderTransaction(int w_id, int d_id, int c_id, int o_ol_cnt, int o_all_lo
 	result=Data_Insert(Order_ID, oorder_id, oorder_value, node_id1);
 	if(result == 0)
 	{
-		//printf("stmtInsertOOrder() insert failed, oorder_id=%ld\n",oorder_id);
 		AbortTransaction(0);
 		return -3;
 	}
-	//printf("3:%d\n",tdata->tid);
-	//begin for.
 
 	for(ol_number=1;ol_number<=o_ol_cnt;ol_number++)
 	{
-		//printf("%d ol_number:%d,o_ol_cnt:%d\n", tdata->tid, ol_number, o_ol_cnt);
         ol_supply_w_id = supplierWarehouseIDs[ol_number-1];
         ol_i_id = itemIDs[ol_number-1];
         ol_quantity = orderQuantities[ol_number-1];
 
         if(ol_i_id < 0)
         {
-        	//current transaction has to rollback, 1%.
-        	//
-        	// to rollback here.
-        	//
         	AbortTransaction(0);
-        	//printf("%1 neworder transaction rollback\n");
-        	//getchar();
         	return -3;
         }
-        //printf("%d ol_number:%d,o_ol_cnt:%d 1\n", tdata->tid, ol_number, o_ol_cnt);
 
     	//stmtGetItem
         item_id=(TupleId)ol_i_id;
@@ -1139,16 +968,12 @@ int newOrderTransaction(int w_id, int d_id, int c_id, int o_ol_cnt, int o_all_lo
         	printf("stmtGetItem() not found, item_id=%ld\n",item_id);
         	PrintTable(Item_ID);
         	exit(-1);
-        	//AbortTransaction(0);
-        	//return -1;
         }
 		else if(flag<=-3)
 		{
-			//printf("stmtGetDist() readcollusion, dist_id=%ld\n",dist_id);
 			AbortTransaction(0);
 			return -1;
 		}
-        //printf("%d ol_number:%d,o_ol_cnt:%d 2\n", tdata->tid, ol_number, o_ol_cnt);
         i_price=(int)(item_value);
 
 
@@ -1158,19 +983,13 @@ int newOrderTransaction(int w_id, int d_id, int c_id, int o_ol_cnt, int o_all_lo
         if(flag == 0)
         {
         	printf("stmtGetStock() not found, s_id=%ld\n",s_id);
-        	//PrintTable(Stock_ID);
         	exit(-1);
-        	//AbortTransaction(0);
-        	//return -1;
         }
 		else if(flag<=-3)
 		{
-			//printf("%d stmtGetDist() readcollusion, dist_id=%ld\n",tdata->tid, dist_id);
 			AbortTransaction(0);
 			return -1;
 		}
-
-        //printf("%d ol_number:%d,o_ol_cnt:%d 3\n", tdata->tid, ol_number, o_ol_cnt);
         s_quantity=(int)(s_value);
 
         if(s_quantity - ol_quantity >= 10) {
@@ -1179,8 +998,8 @@ int newOrderTransaction(int w_id, int d_id, int c_id, int o_ol_cnt, int o_all_lo
             s_quantity = s_quantity - ol_quantity + 91;
         }
 
-        //remote_cnt here.
-    	//stmtUpdateStock
+        // remote_cnt here.
+    	// stmtUpdateStock
         s_id=(TupleId)(ol_i_id+(TupleId)ol_supply_w_id*ITEM_ID);
 
         s_value=(TupleId)(s_quantity);
@@ -1190,8 +1009,6 @@ int newOrderTransaction(int w_id, int d_id, int c_id, int o_ol_cnt, int o_all_lo
         	printf("stmtUpdateStock() update failed, s_id=%ld\n",s_id);
         	PrintTable(Stock_ID);
         	exit(-1);
-        	//AbortTransaction(0);
-        	//return -1;
         }
         else if(result < 0)
         {
@@ -1200,10 +1017,6 @@ int newOrderTransaction(int w_id, int d_id, int c_id, int o_ol_cnt, int o_all_lo
         }
 
         ol_amount=ol_quantity * i_price;
-
-        //printf("ol_number:%d, ol_i_id:%d, ol_supply_w_id:%d, ol_quantity:%d, item_price:%d, s_quantity:%d\n",ol_number, ol_i_id, ol_supply_w_id, ol_quantity, i_price, s_quantity);
-
-
     	//stmtInsertOrderLine
         ol_id=(TupleId)(o_id+(TupleId)w_id*ORDER_ID+(TupleId)d_id*ORDER_ID*WHSE_ID+(TupleId)ol_number*ORDER_ID*WHSE_ID*DIST_ID);
         ol_value=(TupleId)(ol_i_id+(TupleId)ol_supply_w_id*ITEM_ID+(TupleId)ol_quantity*ITEM_ID*WHSE_ID+(TupleId)ol_amount*ITEM_ID*WHSE_ID*ITEM_QUANTITY);
@@ -1211,33 +1024,21 @@ int newOrderTransaction(int w_id, int d_id, int c_id, int o_ol_cnt, int o_all_lo
         result=Data_Insert(OrderLine_ID, ol_id, ol_value, node_id1);
         if(result == 0)
         {
-        	//printf("stmtInsertOrderLine() insert failed, ol_id=%ld\n",ol_id);
         	AbortTransaction(0);
         	return -3;
         }
-
-        //printf("%d ol_number:%d,o_ol_cnt:%d\n", tdata->tid, ol_number, o_ol_cnt);
-
 	}
 
-	//printf("4:%d\n",tdata->tid);
 	result=PreCommit(&index);
 	if(result == 1)
 	{
-		//printf("5:%d\n",tdata->tid);
 		transaction_result=CommitTransaction();
-		//transaction_result=0;
-		//printf("new_order transaction commit.\n");
 	}
 	else
 	{
-		//printf("6:%d\n",tdata->tid);
-		//we should know from which DataRecord to rollback.
 		AbortTransaction(index);
 		transaction_result=-3;
-		//printf("new_order transaction abort.\n");
 	}
-	//printf("7:%d\n",tdata->tid);
 	return transaction_result;
 }
 
@@ -1247,7 +1048,6 @@ int newOrderTransaction(int w_id, int d_id, int c_id, int o_ol_cnt, int o_all_lo
 int paymentTransaction(int w_id, int c_w_id, int h_amount, int d_id, int c_d_id, int c_id, int* node_id, int node_num)
 {
 	StartTransaction();
-	//printf("payment transaction start...\n");
 
 	TupleId whse_id, whse_value;
 	TupleId dist_id, dist_value;
@@ -1290,7 +1090,6 @@ int paymentTransaction(int w_id, int c_w_id, int h_amount, int d_id, int c_d_id,
 	result=Data_Update(Warehouse_ID, whse_id, whse_value, node_id1);
 	if(result == 0)
 	{
-		//printf("payUpdateWhse() update failed, whse_id=%ld\n",whse_id);
 		printf("payUpdateWhse() update failed, whse_id=%ld\n",whse_id);
 		exit(-1);
 	}
@@ -1309,20 +1108,8 @@ int paymentTransaction(int w_id, int c_w_id, int h_amount, int d_id, int c_d_id,
 	}
 	else if(flag<=-3)
 	{
-		//printf("stmtGetDist() readcollusion, dist_id=%ld\n",dist_id);
 		AbortTransaction(0);
 		return -2;
-		/*
-                if(flag==-3)
-		{
-		   //printf("payment readcollusion error\n");
-                   return -2;
-		}
-                else if(flag==-4)
-                   return -3;
-                else
-                   return -4;
-		*/
 	}
 
 	//payUpdateDist
@@ -1339,25 +1126,21 @@ int paymentTransaction(int w_id, int c_w_id, int h_amount, int d_id, int c_d_id,
 	}
 	else if(flag<=-3)
 	{
-		//printf("stmtGetDist() readcollusion, dist_id=%ld\n",dist_id);
 		AbortTransaction(0);
 		return -5;
 	}
 
 	// payment is by customer ID
-
 	//payGetCust
 	cust_id=(TupleId)(c_id+c_w_id*CUST_ID+(TupleId)c_d_id*CUST_ID*WHSE_ID);
 	cust_value=Data_Read(Customer_ID, cust_id, node_id2, &flag);
 	if(flag == 0)
 	{
-		//printf("payGetCust() not found, cust_id=%ld\n",cust_id);
 		printf("payGetCust() not found, cust_id=%ld\n",cust_id);
 		exit(-1);
 	}
 	else if(flag<=-3)
 	{
-		//printf("stmtGetDist() readcollusion, dist_id=%ld\n",dist_id);
 		AbortTransaction(0);
 		return -6;
 	}
@@ -1380,13 +1163,11 @@ int paymentTransaction(int w_id, int c_w_id, int h_amount, int d_id, int c_d_id,
 		cust_value=Data_Read(Customer_ID, cust_id, node_id2, &flag);
 		if(flag == 0)
 		{
-			//printf("payGetCust() not found, cust_id=%ld\n",cust_id);
 			printf("payGetCust() not found, cust_id=%ld\n",cust_id);
 			exit(-1);
 		}
 		else if(flag<=-3)
 		{
-			//printf("stmtGetDist() readcollusion, dist_id=%ld\n",dist_id);
 			AbortTransaction(0);
 			return -7;
 		}
@@ -1396,7 +1177,6 @@ int paymentTransaction(int w_id, int c_w_id, int h_amount, int d_id, int c_d_id,
 		result=Data_Update(Customer_ID, cust_id, cust_value, node_id2);
 		if(result == 0)
 		{
-			//printf("payUpdateCustBalCdata() update failed, cust_id=%ld\n",cust_id);
 			printf("payUpdateCustBalCdata() update failed, cust_id=%ld\n",cust_id);
 			exit(-1);
 		}
@@ -1414,7 +1194,6 @@ int paymentTransaction(int w_id, int c_w_id, int h_amount, int d_id, int c_d_id,
 		result=Data_Update(Customer_ID, cust_id, cust_value, node_id2);
 		if(result == 0)
 		{
-			//printf("payUpdateCustBal() update failed, cust_id=%ld\n",cust_id);
 			printf("payUpdateCustBal() update failed, cust_id=%ld\n",cust_id);
 			exit(-1);
 		}
@@ -1435,17 +1214,11 @@ int paymentTransaction(int w_id, int c_w_id, int h_amount, int d_id, int c_d_id,
 	if(result == 1)
 	{
 		transaction_result=CommitTransaction();
-		//if(transaction_result==-2)
-		//	printf("committransaction result=-2\n");
-		//transaction_result=0;
-		//printf("payment transaction commit.\n");
 	}
 	else
 	{
-		//we should know from which DataRecord to rollback.
 		AbortTransaction(index);
 		transaction_result=-10;
-		//printf("payment transaction abort.\n");
 	}
 	return transaction_result;
 }
@@ -1456,7 +1229,6 @@ int paymentTransaction(int w_id, int c_w_id, int h_amount, int d_id, int c_d_id,
 int deliveryTransaction(int w_id, int o_carrier_id, int* node_id, int node_num)
 {
 	StartTransaction();
-	//printf("delivery transaction start...\n");
 
 	TupleId no_id, no_value;
 	TupleId oo_id, oo_value;
@@ -1509,8 +1281,6 @@ int deliveryTransaction(int w_id, int o_carrier_id, int* node_id, int node_num)
 			AbortTransaction(0);
 			return -3;
 		}
-
-		//printf("GetMinOid: no_o_id=%ld\n",no_o_id);
 
 		if(no_o_id > 0)
 		{
@@ -1565,6 +1335,7 @@ int deliveryTransaction(int w_id, int o_carrier_id, int* node_id, int node_num)
 	        	return -1;
 	        }
 			//delivUpdateDeliveryDate
+
 			/*
 			 * skip this operation.
 			 */
@@ -1628,22 +1399,16 @@ int deliveryTransaction(int w_id, int o_carrier_id, int* node_id, int node_num)
 			skippedDeliveries++;
 	}
 
-	//printf("deliveryTransaction: skippedDeliveries=%d\n",skippedDeliveries);
-	//getchar();
 	result=PreCommit(&index);
 	if(result == 1)
 	{
 		transaction_result=CommitTransaction();
 		newOrderRemoved=true;
-		//transaction_result=0;
-		//printf("delivery transaction commit.\n");
 	}
 	else
 	{
-		//we should know from which DataRecord to rollback.
 		AbortTransaction(index);
 		transaction_result=-3;
-		//printf("delivery transaction abort.\n");
 	}
 	return transaction_result;
 }
@@ -1654,7 +1419,6 @@ int deliveryTransaction(int w_id, int o_carrier_id, int* node_id, int node_num)
 int orderStatusTransaction(int w_id, int d_id, int c_id, int* node_id, int node_num)
 {
 	StartTransaction();
-	//printf("order_status transaction start....w_id=%d,d_id=%d,c_id=%d\n",w_id, d_id, c_id);
 
 	TupleId cust_id, cust_value;
 	TupleId oo_id, oo_value;
@@ -1708,8 +1472,6 @@ int orderStatusTransaction(int w_id, int d_id, int c_id, int* node_id, int node_
 
 	c_balance=(int)(cust_value/(CUST_CREDIT*CUST_DISCOUNT));
 
-	//printf("cust_value=%ld,c_balance=%d\n",cust_value,c_balance);
-
 	// find the newest order for the customer
 	oo_id=(TupleId)((TupleId)w_id*ORDER_ID+(TupleId)d_id*ORDER_ID*WHSE_ID);
 	oo_value=(TupleId)(c_id);
@@ -1720,7 +1482,6 @@ int orderStatusTransaction(int w_id, int d_id, int c_id, int* node_id, int node_
 	//printf("GetMaxOid: o_id=%d\n",o_id);
 
 	// retrieve the carrier & order date for the most recent order.
-	//o_id=(int)(oo_value);
 	if(o_id > 0)
 	{
 		oo_id=(TupleId)(o_id+(TupleId)w_id*ORDER_ID+(TupleId)d_id*ORDER_ID*WHSE_ID);
@@ -1742,7 +1503,6 @@ int orderStatusTransaction(int w_id, int d_id, int c_id, int* node_id, int node_
 			o_carrier_id=(int)(oo_value/(CUST_ID*ORDER_LINES));
 			o_ol_cnt=(int)((oo_value/CUST_ID)%ORDER_LINES);
 		}
-		//printf("orderStatusTransaction: oo_value;%ld, o_carrier_id=%d, o_ol_cnt=%d\n",oo_value, o_carrier_id, o_ol_cnt);
 
 		// retrieve the order lines for the most recent order
 		ol_o_id=o_id;
@@ -1778,22 +1538,18 @@ int orderStatusTransaction(int w_id, int d_id, int c_id, int* node_id, int node_
 	}
 	else
 	{
-		//printf("no order for %d %d %d\n",w_id,d_id,c_id);
+		;
 	}
 
 	result=PreCommit(&index);
 	if(result == 1)
 	{
 		transaction_result=CommitTransaction();
-		//transaction_result=0;
-		//printf("order_status transaction commit.\n");
 	}
 	else
 	{
-		//we should know from which DataRecord to rollback.
 		AbortTransaction(index);
 		transaction_result=-3;
-		//printf("order_status transaction abort.\n");
 	}
 	return transaction_result;
 }
@@ -1804,7 +1560,6 @@ int orderStatusTransaction(int w_id, int d_id, int c_id, int* node_id, int node_
 int stockLevelTransaction(int w_id, int d_id, int threshold, int* node_id, int node_num)
 {
 	StartTransaction();
-	//printf("stock_level transaction start...threshold=%d\n",threshold);
 
 	TupleId dist_id, dist_value;
 	TupleId ol_id, ol_value;
@@ -1852,14 +1607,11 @@ int stockLevelTransaction(int w_id, int d_id, int threshold, int* node_id, int n
 	}
 	else if(flag<=-3)
 	{
-		//printf("stmtGetDist() readcollusion, dist_id=%ld\n",dist_id);
 		AbortTransaction(0);
 		return -1;
 	}
 
 	o_id=(int)(dist_value);
-
-	//printf("d_next_o_id=%d\n", o_id);
 
 	//stockGetCountStock
 	//ol_o_id = (o_id-20 > 0) ? o_id-20 : 1;
@@ -1877,20 +1629,17 @@ int stockLevelTransaction(int w_id, int d_id, int threshold, int* node_id, int n
 		}
 		else if(flag<=-3)
 		{
-			//printf("stmtGetDist() readcollusion, dist_id=%ld\n",dist_id);
 			AbortTransaction(0);
 			return -1;
 		}
 
 		ol_cnt=(int)((oo_value/CUST_ID)%ORDER_LINES);
-		//printf("ol_o_id=%d, ol_cnt=%d\n", ol_o_id, ol_cnt);
 
 		//for each item in the order.
 		for(ol_number=1;ol_number<=ol_cnt;ol_number++)
 		{
 			//get item_id.
 			ol_id=(TupleId)(ol_o_id+(TupleId)w_id*ORDER_ID+(TupleId)d_id*ORDER_ID*WHSE_ID+(TupleId)ol_number*ORDER_ID*WHSE_ID*DIST_ID);
-			//printf("ol_number:%d,ol_id:%ld\n",ol_number, ol_id);
 			ol_value=Data_Read(OrderLine_ID, ol_id, node_id1, &flag);
 			if(flag==0)
 			{
@@ -1899,12 +1648,10 @@ int stockLevelTransaction(int w_id, int d_id, int threshold, int* node_id, int n
 			}
 			else if(flag<=-3)
 			{
-				//printf("stmtGetDist() readcollusion, dist_id=%ld\n",dist_id);
 				AbortTransaction(0);
 				return -1;
 			}
 
-			//printf("ol_value:%ld\n",ol_value);
 			ol_i_id=(int)(ol_value%ITEM_ID);
 
 			//get the stock_count.
@@ -1917,15 +1664,11 @@ int stockLevelTransaction(int w_id, int d_id, int threshold, int* node_id, int n
 			}
 			else if(flag<=-3)
 			{
-				//printf("stmtGetDist() readcollusion, dist_id=%ld\n",dist_id);
 				AbortTransaction(0);
 				return -1;
 			}
 
-
 			s_quantity=(int)(stock_value);
-
-			//printf("s_quantity:%d,item_id:%d\n",s_quantity, ol_i_id);
 			if(s_quantity < threshold)stock_count++;
 		}
 	}
@@ -1933,18 +1676,12 @@ int stockLevelTransaction(int w_id, int d_id, int threshold, int* node_id, int n
 	if(result == 1)
 	{
 		transaction_result=CommitTransaction();
-		//transaction_result=0;
-		//printf("stock_level transaction commit.\n");
 	}
 	else
 	{
-		//we should know from which DataRecord to rollback.
 		AbortTransaction(index);
 		transaction_result=-3;
-		//printf("stock_level transaction abort.\n");
 	}
-
-	//printf("stock_count=%d\n",stock_count);
 
 	return transaction_result;
 }
@@ -1965,14 +1702,12 @@ int GetMaxOid(int table_id, int w_id, int d_id, int c_id)
 
 	for(i=min;i<max;i++)
 	{
-		//tuple_value=LocateData_Read(table_id, i, &tuple_id, &abort);
 		if(abort)
 			return -1;
 
 		if(tuple_value>0)
 		{
 			temp_cid=(int)(tuple_value%CUST_ID);
-			//printf("%d : %d\n",i,temp_cid);
 			if(temp_cid == c_id)
 			{
 				temp_oid=(int)(tuple_id%ORDER_ID);
@@ -1998,12 +1733,9 @@ int GetMinOid(int table_id, int w_id, int d_id)
 	min=bucket_id*bucket_size;
 	max=min+bucket_size;
 
-	//printf("GetMinOid:bucket_id=%d, min=%ld, max=%ld\n",bucket_id, min, max);
-
 	for(i=min;i<max;i++)
 	{
 		tuple_id=0;
-		//tuple_value=LocateData_Read(table_id, i, &tuple_id, &abort);
 		if(abort)
 			return -2;
 
@@ -2016,16 +1748,13 @@ int GetMinOid(int table_id, int w_id, int d_id)
 	}
 	if(o_id==20000000)
 	{
-		//printf("w_id:%d, d_id:%d\n", w_id, d_id);
 		validation(table_id);
-		//getchar();
 	}
 	return (o_id < 20000000) ? o_id : -1;
 }
 
 int testTransaction(int w_id, int d_id)
 {
-	//printf("begin test transaction\n");
 	int result, index, transaction_result;
 	int flag;
 	int i;
@@ -2052,7 +1781,6 @@ int testTransaction(int w_id, int d_id)
 	for(i=0;i<10;i++)
 	{
 
-		//tuple_id=(TupleId)(getItemID()%(max-min)+min);
 		tuple_value=0;
 		tuple_id=(TupleId)getItemID();
 		result=Data_Update(Item_ID, tuple_id, tuple_value, node_id);
@@ -2066,55 +1794,16 @@ int testTransaction(int w_id, int d_id)
 			AbortTransaction(0);
 			return -1;
 		}
-
-		/*
-		//tuple_id=(TupleId)getItemID();
-		tuple_id=(TupleId)(getItemID()%(max-min)+min);
-
-		Data_Read(Item_ID, tuple_id, &flag);
-		if(flag==0)
-		{
-			printf("stocklevel_eachorder() not found, oo_id=%ld\n",tuple_id);
-			exit(-1);
-		}
-		else if(flag==-3)
-		{
-			//printf("stmtGetDist() readcollusion, dist_id=%ld\n",dist_id);
-			AbortTransaction(0);
-			return -1;
-		}
-
-		//tuple_id=(TupleId)(w_id+(TupleId)d_id*WHSE_ID);
-		tuple_value=0;
-
-		//tuple_id=(TupleId)getItemID();
-		tuple_id=(TupleId)(rand()%(max-min)+min);
-		result=Data_Update(Item_ID, tuple_id, tuple_value);
-		if(result==0)
-		{
-			printf("delivUpdateCustBalDelivCnt() update failed, cust_id=%ld\n",tuple_id);
-			exit(-1);
-		}
-		else if(result < 0)
-		{
-			AbortTransaction(0);
-			return -1;
-		}
-		*/
 	}
 
-	//printf("before precommit\n");
 	result=PreCommit(&index);
 
-	//printf("after precommit\n");
 	if(result==1)
 	{
-		//printf("commit tranaction\n");
 		transaction_result=CommitTransaction();
 	}
 	else
 	{
-		//printf("abort transaction\n");
 		AbortTransaction(index);
 		transaction_result=-1;
 	}

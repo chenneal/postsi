@@ -1,3 +1,10 @@
+/*
+ * communicate.h
+ *
+ *  Created on: Dec 29, 2015
+ *      Author: Yu
+ */
+
 #ifndef COMMUNICATE_H_
 #define COMMUNICATE_H_
 

@@ -43,7 +43,7 @@ int ReadCollusion(int index, int windex, TransactionId tid, TransactionId wtid)
    {
 	   if(cid > 0)
 	   {
-		   //update local transaction's [s,c].
+		   /* update local transaction's [s,c]. */
 		   result=ForceUpdateProcSidMax(index, cid);
 		   return result;
 	   }
@@ -63,8 +63,6 @@ void WriteCollusion(TransactionId tid, int index)
 
    TransactionId* ReadList=NULL;
 
-   //TransactionId* OldReadList=NULL;
-
    TransactionId rdtid;
 
    StartId sid;
@@ -74,19 +72,15 @@ void WriteCollusion(TransactionId tid, int index)
 
    ReadList=(TransactionId*)pthread_getspecific(NewReadListKey);
 
-   //OldReadList=(TransactionId*)pthread_getspecific(OldReadList);
-
-   //printf("threadnum = %d, nodenum = %d\n", THREADNUM, NODENUM);
    for (i = 0; i < THREADNUM*NODENUM; i++)
    {
 	  rdtid = ReadList[i];
-	  //rdindex=(rdtid-1)/MaxTransId;
+
 	  if (TransactionIdIsValid(rdtid) && (i != index) && IsTransactionActive(i, rdtid, true, &sid, &cid))
 	  {
 		  if(cid > 0)
 		  {
-			  //adjust cid_min of current transaction according to the 'sid'.
-			  //UpdateProcCommitId(i,sid);
+			  /* adjust cid_min of current transaction according to the 'sid'. */
 			  ForceUpdateProcCidMin(index, sid);
 		  }
 		  else
@@ -102,7 +96,6 @@ void WriteCollusion(TransactionId tid, int index)
  */
 int Data_Insert(int table_id, TupleId tuple_id, TupleId value, int nid)
 {
-	//printf("enter insert\n");
 	int index=0;
 	int status;
 	int h;
@@ -111,11 +104,11 @@ int Data_Insert(int table_id, TupleId tuple_id, TupleId value, int nid)
 	TransactionId tid;
 	THREAD* threadinfo;
 
-	//get the pointer to current transaction data.
+	// get the pointer to current transaction data.
 	tdata=(TransactionData*)pthread_getspecific(TransactionDataKey);
 	tid=tdata->tid;
 
-	//get the pointer to current thread information.
+	// get the pointer to current thread information.
 	threadinfo=(THREAD*)pthread_getspecific(ThreadInfoKey);
 	index=threadinfo->index;
 	/*
@@ -132,11 +125,10 @@ int Data_Insert(int table_id, TupleId tuple_id, TupleId value, int nid)
 
     status = *(recv_buffer[lindex]);
     h = *(recv_buffer[lindex]+1);
-    //printf("status = %d, h = %d\n", status, h);
+
     if (status == 0)
     	return 0;
 
-	//WriteCollusion(table_id, h, tid, index);
 	datard.type=DataInsert;
 	datard.table_id=table_id;
 	datard.tuple_id=tuple_id;
@@ -171,25 +163,23 @@ int Data_Update(int table_id, TupleId tuple_id, TupleId value, int nid)
 	int flag;
 	int result;
 
-	//get the pointer to current transaction data.
+	// get the pointer to current transaction data.
 	tdata=(TransactionData*)pthread_getspecific(TransactionDataKey);
 	tid=tdata->tid;
 
-	//get the pointer to current thread information.
+	// get the pointer to current thread information.
 	threadinfo=(THREAD*)pthread_getspecific(ThreadInfoKey);
 	index=threadinfo->index;
 
 	int lindex;
 	lindex = GetLocalIndex(index);
 
-	//if (Send3(lindex, nid, cmd_updatefind, table_id, tuple_id) == -1)
 	if(Send5(lindex, nid, cmd_updatefind, table_id, tuple_id, tid, index) == -1)
 		printf("update find send error\n");
-	//if (Recv(lindex, nid, 2) == -1)
+
 	if (Recv(lindex, nid, 3) == -1)
 		printf("update find recv error\n");
 
-	//printf("after update find\n");
 	status = *(recv_buffer[lindex]);
 	h  = *(recv_buffer[lindex] + 1);
 
@@ -207,28 +197,9 @@ int Data_Update(int table_id, TupleId tuple_id, TupleId value, int nid)
 
     if(result==0)
     {
-    	//return to abort
+    	// return to abort
     	return -1;
     }
-
-    /*
-     * xxzhou: light-read before update here.
-     */
-	//Data_Read(table_id, tuple_id, nid);
-
-	/*
-	//by here, we are sure that we can update the data.
-	if (Send5(lindex, nid, cmd_updatewritelistinsert, table_id, h, tid, index) == -1)
-		printf("update write list insert send error\n");
-	if (recv(connect_socket[nid][lindex], recv_buffer[lindex], READLISTMAX * sizeof(uint64_t), 0) == -1)
-		printf("update writ list insert recv error\n");
-	//to modify the interface.
-	WriteCollusion(index, tid, recv_buffer[lindex]);
-	*/
-	//interface:update(table_id,index);
-
-	//record the updated data.
-	//get the data pointer.
 
 	datard.type=DataUpdate;
 
@@ -266,23 +237,21 @@ int Data_Delete(int table_id, TupleId tuple_id, int nid)
 	int flag;
 	int result;
 
-	//get the pointer to current transaction data.
+	// get the pointer to current transaction data.
 	tdata=(TransactionData*)pthread_getspecific(TransactionDataKey);
 	tid=tdata->tid;
 
-	//get the pointer to current thread information.
+	// get the pointer to current thread information.
 	threadinfo=(THREAD*)pthread_getspecific(ThreadInfoKey);
 	index=threadinfo->index;
 	int lindex;
 	lindex = GetLocalIndex(index);
-	//get the index of 'tuple_id' in table 'table_id'.
-	//index=hashsearch(table_id,tuple_id);
-	//if (Send3(lindex, nid, cmd_updatefind, table_id, tuple_id) == -1)
+
 	if (Send5(lindex, nid, cmd_updatefind, table_id, tuple_id, tid, index) == -1)
 		printf("update find send error\n");
 	if (Recv(lindex, nid, 3) == -1)
 		printf("update find recv error\n");
-	//printf("after update find\n");
+
 	status = *(recv_buffer[lindex]);
 	h  = *(recv_buffer[lindex] + 1);
 
@@ -299,25 +268,9 @@ int Data_Delete(int table_id, TupleId tuple_id, int nid)
     result=ReadCollusion(index, wr_index, tid, wr_tid);
     if(result==0)
     {
-    	//return to abort.
+    	// return to abort.
     	return -1;
     }
-
-	//Data_Read(table_id, tuple_id, nid);
-
-	/*
-	//by here, we are sure that we can update the data.
-	if (Send5(lindex, nid, cmd_updatewritelistinsert, table_id, h, tid, index) == -1)
-		printf("update write list insert send error\n");
-	if (recv(connect_socket[nid][lindex], recv_buffer[lindex], READLISTMAX * sizeof(uint64_t), 0) == -1)
-		printf("update writ list insert recv error\n");
-	//to modify the interface.
-	WriteCollusion(index, tid, recv_buffer[lindex]);
-	*/
-	//interface:update(table_id,index);
-
-	//record the updated data.
-	//get the data pointer.
 
 	datard.type=DataDelete;
 
@@ -336,7 +289,6 @@ int Data_Delete(int table_id, TupleId tuple_id, int nid)
  */
 TupleId Data_Read(int table_id, TupleId tuple_id, int nid, int* flag)
 {
-	//printf("data_read: enter\n");
 	StartId sid_max;
 	StartId sid_min;
 	CommitId cid_min;
@@ -356,35 +308,32 @@ TupleId Data_Read(int table_id, TupleId tuple_id, int nid, int* flag)
 	TransactionData* tdata;
 	TransactionId tid;
 	THREAD* threadinfo;
-	//get the pointer to current thread information.
+	// get the pointer to current thread information.
 	threadinfo=(THREAD*)pthread_getspecific(ThreadInfoKey);
 	index=threadinfo->index;
 	int lindex;
 	lindex = GetLocalIndex(index);
 
 	uint64_t* buffer;
-	//get the pointer to current transaction data.
+	// get the pointer to current transaction data.
 	tdata=(TransactionData*)pthread_getspecific(TransactionDataKey);
 	tid=tdata->tid;
 
 	*flag=1;
 
-	//maybe the 'sid_max' can be passed as a parameter.
-	//sid_max=GetTransactionSidMax(threadinfo->index);
-	//printf("tid:%d\n",tid);
 	DataMemStart=(char*)pthread_getspecific(DataMemKey);
 
-	// find a place to read, insert the read list transaction, and return the write list transaction id.
 	if(Send5(lindex, nid, cmd_readfind, table_id, tuple_id, tid, index) == -1)
 	   printf("read find send error\n");
 	if (Recv(lindex, nid, 4) == -1)
 	   printf("read find lock send error\n");
+
 	status = *(recv_buffer[lindex]);
 	wtid = *(recv_buffer[lindex]+1);
 	windex = *(recv_buffer[lindex]+2);
 	h = *(recv_buffer[lindex]+3);
 
-	//roll back
+	// roll back
 	if (status == 0)
 	{
 		*flag=0;
@@ -397,28 +346,17 @@ TupleId Data_Read(int table_id, TupleId tuple_id, int nid, int* flag)
 		*flag=-3;
 		return 0;
 	}
-/*
-	newest = (HashTable[h].rear + VERSIONMAX -1) % VERSIONMAX;
-	//the data by (table_id,tuple_id) is being updated.
-	if(newest > HashTable[h].lcommit)
-	{
-		//to do nothing here.
-	}
-*/
+
 	visible=IsDataRecordVisible(DataMemStart, table_id, tuple_id, nid);
 	if(visible == -1)
 	{
-		//current transaction has deleted the tuple to read, so return to rollback.
-		//pthread_spin_unlock(&RecordLatch[table_id][h]);
+		// current transaction has deleted the tuple to read, so return to roll back.
 		*flag=-1;
 		return 0;
 	}
 	else if(visible > 0)
 	{
-		//see own transaction's update.
-		//pthread_spin_unlock(&RecordLatch[table_id][h]);
-		//return (void*)&HashTable[h].VersionList[0];
-		//return HashTable[h].tupleid;
+		// see own transaction's update.
 		return visible;
 	}
 
@@ -432,23 +370,20 @@ TupleId Data_Read(int table_id, TupleId tuple_id, int nid, int* flag)
     if (Recv(lindex, nid, 4) == -1)
     	printf("read version recv error\n");
 
-    //buffer=(uint64_t*)recv_buffer[lindex];
-
-        status=*(recv_buffer[lindex]);
+    status=*(recv_buffer[lindex]);
     sid_min=*(recv_buffer[lindex]+1);
     cid_min=*(recv_buffer[lindex]+2);
     value=*(recv_buffer[lindex]+3);
-    //printf("status = %d, s_min = %d, c_min = %d, value = %d, tupleid = %ld, tableid = %d\n", status, sid_min, cid_min, value, tuple_id, table_id);
 
     if (status == 0)
     {
-    	//read nothing.
+    	// read nothing.
     	*flag=-4;
     	return 0;
     }
     else if(status == 1)
     {
-    	//read a deleted version.
+    	// read a deleted version.
     	*flag=-2;
     	return 0;
     }
@@ -457,104 +392,12 @@ TupleId Data_Read(int table_id, TupleId tuple_id, int nid, int* flag)
     if(result==0)
     {
         *flag = -5;
-    	//return to abort current transaction.
+    	// return to abort current transaction.
     	return 0;
     }
 
     return value;
 }
-/*
-TupleId LocateData_Read(int table_id, int h, TupleId *id)
-{
-	VersionId i;
-	int index, c_id;
-	TupleId visible, tuple_id;
-
-	VersionId newread,newest;
-	//Version* v;
-	char* DataMemStart=NULL;
-
-	TransactionData* tdata;
-	TransactionId tid;
-	THREAD* threadinfo;
-	//get the pointer to current transaction data.
-	tdata=(TransactionData*)pthread_getspecific(TransactionDataKey);
-	tid=tdata->tid;
-
-	//get the pointer to current thread information.
-	threadinfo=(THREAD*)pthread_getspecific(ThreadInfoKey);
-	index=threadinfo->index;
-
-	DataMemStart=(char*)pthread_getspecific(DataMemKey);
-
-	THash HashTable = TableList[table_id];
-
-	if(HashTable[h].tupleid == InvalidTupleId)
-	{
-		return 0;
-	}
-
-	tuple_id=HashTable[h].tupleid;
-	//we should add to the read list before reading.
-	//ReadListInsert(table_id, h, tid);
-	//ReadCollusion(table_id, h, tid,index);
-
-	pthread_spin_lock(&RecordLatch[table_id][h]);
-	newest = (HashTable[h].rear + VERSIONMAX -1) % VERSIONMAX;
-	//the data by (table_id,tuple_id) is being updated.
-	if(newest > HashTable[h].lcommit)
-	{
-		//to do nothing here.
-	}
-
-	visible=IsDataRecordVisible(DataMemStart, table_id, tuple_id);
-	if(visible == -1)
-	{
-		//current transaction has deleted the tuple to read, so return to rollback.
-		pthread_spin_unlock(&RecordLatch[table_id][h]);
-		return 0;
-	}
-	else if(visible > 0)
-	{
-		//see own transaction's update.
-		pthread_spin_unlock(&RecordLatch[table_id][h]);
-		//return (void*)&HashTable[h].VersionList[0];
-		//return HashTable[h].tupleid;
-		*id=tuple_id;
-		return visible;
-	}
-
-	//by here, we try to read already committed tuple.
-	if(HashTable[h].lcommit >= 0)
-	{
-		for (i = HashTable[h].lcommit; i != (HashTable[h].front + VERSIONMAX - 1) % VERSIONMAX; i = (i-1) % VERSIONMAX)
-		{
-			//
-			if (MVCCVisible(&(HashTable[h]), i) )
-			{
-				if(IsMVCCDeleted(&HashTable[h],i))
-				{
-					pthread_spin_unlock(&RecordLatch[table_id][h]);
-					return 0;
-				}
-				else
-				{
-					pthread_spin_unlock(&RecordLatch[table_id][h]);
-					//return (void*)&HashTable[h].VersionList[i];
-					//return HashTable[h].tupleid;
-					*id=tuple_id;
-					return HashTable[h].VersionList[i].value;
-				}
-			}
-		}
-	}
-	pthread_spin_unlock(&RecordLatch[table_id][h]);
-
-	return 0;
-
-
-}
-*/
 
 /*
  * used for read operation during update and delete operation.
@@ -571,17 +414,17 @@ int Light_Data_Read(int table_id, int h)
 	TransactionId tid;
 	THREAD* threadinfo;
 
-	//get the pointer to current transaction data.
+	// get the pointer to current transaction data.
 	tdata=(TransactionData*)pthread_getspecific(TransactionDataKey);
 	tid=tdata->tid;
 
-	//get the pointer to current thread information.
+	// get the pointer to current thread information.
 	threadinfo=(THREAD*)pthread_getspecific(ThreadInfoKey);
 	index=threadinfo->index;
 
 	THash HashTable = TableList[table_id];
 
-	//we should add to the read list before reading.
+	// we should add to the read list before reading.
 	ReadListInsert(table_id, h, tid, index);
 
 	result=ReadCollusion(table_id, h, tid,index);
@@ -602,11 +445,11 @@ int TrulyDataInsert(int table_id, uint64_t index, TupleId tuple_id, TupleId valu
 	int status;
 	int index2;
 	THREAD* threadinfo;
-	//int index,tableid;
+
 	TransactionData* tdata;
 	TransactionId tid;
 	DataLock lockrd;
-	//get the pointer to current thread information.
+	// get the pointer to current thread information.
 	threadinfo=(THREAD*)pthread_getspecific(ThreadInfoKey);
 	index2=threadinfo->index;
 	int lindex;
@@ -614,7 +457,6 @@ int TrulyDataInsert(int table_id, uint64_t index, TupleId tuple_id, TupleId valu
 	tdata=(TransactionData*)pthread_getspecific(TransactionDataKey);
 	tid=tdata->tid;
 
-    //if((Send5(lindex, nid, cmd_trulyinsert, table_id, value, index, tid)) == -1)
 	if((Send6(lindex, nid, cmd_trulyinsert, table_id, tuple_id, value, index, tid)) == -1)
     	printf("truly insert send error!\n");
     if((Recv(lindex, nid, 1)) == -1)
@@ -624,7 +466,7 @@ int TrulyDataInsert(int table_id, uint64_t index, TupleId tuple_id, TupleId valu
     if (status == 4)
     	return -1;
 
-	//record the lock.
+	// record the lock.
 	lockrd.table_id=table_id;
 	lockrd.tuple_id=tuple_id;
 	lockrd.lockmode=LOCK_EXCLUSIVE;
@@ -639,7 +481,6 @@ int TrulyDataInsert(int table_id, uint64_t index, TupleId tuple_id, TupleId valu
  */
 int TrulyDataUpdate(int table_id, uint64_t index, TupleId tuple_id, TupleId value, int nid)
 {
-	//int index,tableid;
 	int index2;
 	StartId sid_max;
 	StartId sid_min;
@@ -655,7 +496,7 @@ int TrulyDataUpdate(int table_id, uint64_t index, TupleId tuple_id, TupleId valu
 
 	tdata=(TransactionData*)pthread_getspecific(TransactionDataKey);
 	tid=tdata->tid;
-	//get the pointer to current thread information.
+	// get the pointer to current thread information.
 	threadinfo=(THREAD*)pthread_getspecific(ThreadInfoKey);
 	index2=threadinfo->index;
 	int lindex;
@@ -665,13 +506,12 @@ int TrulyDataUpdate(int table_id, uint64_t index, TupleId tuple_id, TupleId valu
 	sid_min=GetTransactionSidMin(lindex);
 	cid_min=GetTransactionCidMin(lindex);
 
-	//printf("TrulyDataUpdate: %d %d .\n",tableid,index);
-	//to void repeatedly add lock.
+	// to void repeatedly add lock.
 	if(IsWrLockHolding(table_id,tuple_id,nid) == 0)
 	{
 		firstadd=true;
 	}
-	//printf("TrulyDataUpdate: after holdlock.\n");
+
 	if (Send8(lindex, nid, cmd_updateconflict, table_id, index, tid, firstadd, sid_max, sid_min, cid_min) == -1)
 		printf("update conflict send error\n");
 	if (Recv(lindex, nid, READLISTMAX+3) == -1)
@@ -683,7 +523,7 @@ int TrulyDataUpdate(int table_id, uint64_t index, TupleId tuple_id, TupleId valu
 	if (status == 4)
 		return -1;
 
-	//record the lock.
+	// record the lock.
 	lockrd.table_id=table_id;
 	lockrd.tuple_id=tuple_id;
 	lockrd.index = index;
@@ -691,21 +531,14 @@ int TrulyDataUpdate(int table_id, uint64_t index, TupleId tuple_id, TupleId valu
 	lockrd.node_id = nid;
 	DataLockInsert(&lockrd);
 
-	//add process elem lock here.
 	result=MVCCUpdateProcId(lindex, sid_min, cid_min);
 
 	if(result==0)
 		return -1;
 
-	//merge-read-list
+	// merge-read-list
 	MergeReadList(recv_buffer[lindex]+3);
-	//by here, we have hold the write-lock.
 
-	//printf("TrulyDataUpdate: after IsUpdateConflict.\n");\
-
-	//printf("TrulyDataUpdate: after lock record table_id:%d,index:%d.\n",table_id, index);
-
-	//here are the place we truly update the data.
 	if (Send6(lindex, nid, cmd_updateversion, table_id, index, tid, value, isdelete) == -1)
 		printf("update version send error\n");
 	if (Recv(lindex, nid, 1) == -1)
@@ -718,7 +551,6 @@ int TrulyDataUpdate(int table_id, uint64_t index, TupleId tuple_id, TupleId valu
  */
 int TrulyDataDelete(int table_id, uint64_t index, TupleId tuple_id, int nid)
 {
-	//int index,tableid;
 	int index2;
 	StartId sid_max;
 	StartId sid_min;
@@ -737,7 +569,7 @@ int TrulyDataDelete(int table_id, uint64_t index, TupleId tuple_id, int nid)
 
 	tdata=(TransactionData*)pthread_getspecific(TransactionDataKey);
 	tid=tdata->tid;
-	//get the pointer to current thread information.
+	// get the pointer to current thread information.
 	threadinfo=(THREAD*)pthread_getspecific(ThreadInfoKey);
 	index2=threadinfo->index;
 	int lindex;
@@ -747,16 +579,12 @@ int TrulyDataDelete(int table_id, uint64_t index, TupleId tuple_id, int nid)
 	sid_min=GetTransactionSidMin(lindex);
 	cid_min=GetTransactionCidMin(lindex);
 
-	//GetPosition((Record*)data,&tableid,&index);
-	//tableid=table_id;
-
-	//printf("TrulyDataUpdate: %d %d .\n",tableid,index);
-	//to void repeatedly add lock.
+	// to void repeatedly add lock.
 	if(IsWrLockHolding(table_id,tuple_id,nid) == 0)
 	{
 		firstadd=true;
 	}
-	//printf("TrulyDataUpdate: after holdlock.\n");
+
 	if (Send8(lindex, nid, cmd_updateconflict, table_id, index, tid, firstadd, sid_max, sid_min, cid_min) == -1)
 		printf("update conflict send error\n");
 	if (Recv(lindex, nid, READLISTMAX+3) == -1)
@@ -768,7 +596,7 @@ int TrulyDataDelete(int table_id, uint64_t index, TupleId tuple_id, int nid)
 	if (status == 4)
 		return -1;
 
-	//record the lock.
+	// record the lock.
 	lockrd.table_id=table_id;
 	lockrd.tuple_id=tuple_id;
 	lockrd.index = index;
@@ -781,12 +609,9 @@ int TrulyDataDelete(int table_id, uint64_t index, TupleId tuple_id, int nid)
 	if(result==0)
 		return -1;
 
-	//merge-read-list
+	// merge-read-list
 	MergeReadList(recv_buffer[lindex]+3);
 
-	//printf("TrulyDataUpdate: after lock record table_id:%d,index:%d.\n",table_id, index);
-
-	//here are the place we truly update the data.
 	if (Send6(lindex, nid, cmd_updateversion, table_id, index, tid, value, isdelete) == -1)
 		printf("update version send error\n");
 	if (Recv(lindex, nid, 1) == -1)

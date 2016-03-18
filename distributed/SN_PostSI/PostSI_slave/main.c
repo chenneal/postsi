@@ -4,6 +4,7 @@
  *  Created on: Nov 10, 2015
  *      Author: xiaoxin
  */
+
 #include<stdio.h>
 #include<unistd.h>
 #include<sys/shm.h>
@@ -41,9 +42,6 @@ int main(int argc, char *argv[])
     	dataLoading();
     	WaitDataReady();
     	RunTerminals(THREADNUM);
-    	//ThreadRun(THREADNUM);
-
-    	// wait to print the table
     	printf("transaction process finished.\n");
     }
 	return 0;

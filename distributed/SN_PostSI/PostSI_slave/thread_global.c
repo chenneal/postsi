@@ -26,7 +26,7 @@ void InitThreadGlobalKey(void)
 		return;
 	}
 
-	//initialize the pthread_key_t array.
+	// initialize the pthread_key_t array.
 	for(i=0;i<GlobalLockNum;i++)
 	{
 		pthread_key_create(&keyarray[i],NULL);

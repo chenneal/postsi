@@ -1,3 +1,10 @@
+/*
+ * socket.h
+ *
+ *  Created on: Jan 18, 2016
+ *      Author: Yu
+ */
+
 #ifndef SOCKET_H_
 #define SOCKET_H_
 #include "type.h"

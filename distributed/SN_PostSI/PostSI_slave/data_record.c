@@ -4,6 +4,7 @@
  *  Created on: Nov 23, 2015
  *      Author: xiaoxin
  */
+
 /*
  * interface functions for recording data update during
  * transaction running.
@@ -46,9 +47,6 @@ void CommitInsertData(int table_id, uint64_t index, CommitId cid, int nid)
 
 void CommitUpdateData(int table_id, uint64_t index, CommitId cid, int nid)
 {
-	//int tableid;
-	//int h;
-    //GetPosition(r, &tableid, &h);
 	int index2;
 	THREAD* threadinfo;
     threadinfo=(THREAD*)pthread_getspecific(ThreadInfoKey);
@@ -88,14 +86,6 @@ void AbortInsertData(int table_id, uint64_t index, int nid)
 		printf("abort insert send error\n");
     if((Recv(lindex, nid, 1)) == -1)
     	printf("abort insert recv error\n");
-
-	/*
-	VersionId newest;
-	Record * r = (Record *) data;
-	newest = (r->rear + VERSIONMAX -1) % VERSIONMAX;
-	r->VersionList[newest].tid = 0;
-	r->rear = newest;
-	*/
 }
 
 void AbortUpdateData(int table_id, uint64_t index, int nid)
@@ -138,7 +128,7 @@ void DataRecordInsert(DataRecord* datard)
 	char* DataMemStart;
 	DataRecord* ptr;
 
-	//get the thread's pointer to data memory.
+	// get the thread's pointer to data memory.
 	DataMemStart=(char*)pthread_getspecific(DataMemKey);
 
 	start=(char*)((char*)DataMemStart+DataNumSize);
@@ -152,10 +142,10 @@ void DataRecordInsert(DataRecord* datard)
 
 	*(int*)DataMemStart=num+1;
 
-	//start address for record to insert.
+	// start address for record to insert.
 	start=start+num*sizeof(DataRecord);
 
-	//insert the data record here.
+	// insert the data record here.
 	ptr=(DataRecord*)start;
 	ptr->type=datard->type;
 
@@ -168,107 +158,7 @@ void DataRecordInsert(DataRecord* datard)
 
 	ptr->node_id = datard->node_id;
 }
-/*
-void InsertRecord(void* data)
-{
-	Size offset;
-	Size newoffset;
-	char* start;
-	char* DataMemStart;
 
-	//get the thread's pointer to data memory.
-	DataMemStart=(char*)pthread_getspecific(DataMemKey);
-
-	start=(char*)((char*)DataMemStart+DataOffsetSize);
-	offset=*(int*)DataMemStart;
-	//start address for insert record.
-	start=start+offset;
-	newoffset=offset+sizeof(UpdateType)+sizeof(void**);
-	if(newoffset >= DataMemSize())
-	{
-		printf("data memory out of space. PID: %d\n",pthread_self());
-		return;
-	}
-
-	*(int*)DataMemStart=newoffset;
-
-	//record type here.
-	*(UpdateType*)start = DataInsert;
-
-	start=(char*)start+sizeof(UpdateType);
-
-	//record data pointer here.
-	*(void**)start=data;
-}
-*/
-/*
-void UpdateRecord(void* olddata,void* newdata)
-{
-	Size offset;
-	Size newoffset;
-	char* start;
-
-	char* DataMemStart;
-
-	//get the thread's pointer to data memory.
-	DataMemStart=(char*)pthread_getspecific(DataMemKey);
-
-	//start address for update record.
-	start=(char*)((char*)DataMemStart+DataOffsetSize);
-	offset=*(int*)DataMemStart;
-
-	start=start+offset;
-	newoffset=offset+sizeof(UpdateType)+sizeof(void**)*2;
-	if(newoffset >= DataMemSize())
-	{
-		printf("data memory out of space. PID: %d\n",pthread_self());
-		return;
-	}
-
-	*(int*)DataMemStart=newoffset;
-
-	*(UpdateType*)start = DataUpdate;
-
-	start=(char*)start+sizeof(UpdateType);
-
-	*(void**)start=olddata;
-	start=(char*)start+sizeof(void**);
-	*(void**)start=newdata;
-}
-*/
-/*
-void DeleteRecord(void* data)
-{
-	Size offset;
-	Size newoffset;
-	char* start;
-
-	char* DataMemStart;
-
-	//get the thread's pointer to data memory.
-	DataMemStart=(char*)pthread_getspecific(DataMemKey);
-
-	start=(char*)((char*)DataMemStart+DataOffsetSize);
-	offset=*(int*)DataMemStart;
-	//start address for delete record.
-	start=start+offset;
-	newoffset=offset+sizeof(UpdateType)+sizeof(void**);
-	if(newoffset >= DataMemSize())
-	{
-		printf("data memory out of space. PID: %d\n",pthread_self());
-		return;
-	}
-	*(int*)DataMemStart=newoffset;
-
-	//record type here.
-	*(UpdateType*)start = DataDelete;
-
-	start=(char*)start+sizeof(UpdateType);
-
-	//record data pointer here.
-	*(void**)start=data;
-}
-*/
 Size DataMemSize(void)
 {
 	return DataMenMaxSize;
@@ -281,7 +171,7 @@ void InitDataMemAlloc(void)
 	THREAD* threadinfo;
 	Size size;
 
-	//get start address of current thread's memory.
+	// get start address of current thread's memory.
 	threadinfo=(THREAD*)pthread_getspecific(ThreadInfoKey);
 	memstart=threadinfo->memstart;
 
@@ -295,7 +185,7 @@ void InitDataMemAlloc(void)
 		return;
 	}
 
-	//set global variable.
+	// set global variable.
 	pthread_setspecific(DataMemKey,DataMemStart);
 }
 
@@ -323,11 +213,10 @@ void CommitDataRecord(TransactionId tid, CommitId cid)
 
 	DataMemStart=(char*)pthread_getspecific(DataMemKey);
 	start=DataMemStart+DataNumSize;
-	//printf("PID:%u,datamemstart=%d\n",pthread_self(),start);
-	num=*(int*)DataMemStart;
-	//printf("datarecord num: %d\n",num);
 
-	//deal with data-update record one by one.
+	num=*(int*)DataMemStart;
+
+	// deal with data-update record one by one.
 	for(i=0;i<num;i++)
 	{
 		ptr=(DataRecord*)(start+i*sizeof(DataRecord));
@@ -337,33 +226,12 @@ void CommitDataRecord(TransactionId tid, CommitId cid)
 		switch(ptr->type)
 		{
 		case DataInsert:
-			//interface to do here.
-			//get the address of inserted tuple and write the cid.
-			//then update the tailer.
-
-			/*
-			 * interface:CommitInsertData(data,cid);
-			 */
 			CommitInsertData(table_id, index, cid, nid);
 			break;
 		case DataUpdate:
-			//interface to do here.
-			//get the address of inserted and deleted tuple, and
-			//write the cid, then update the tailer.
-
-			/*
-			 * interface:CommitUpdateData(data,cid);
-			 */
 			CommitUpdateData(table_id, index, cid, nid);
 			break;
 		case DataDelete:
-			//interface to do here.
-			//get the address of deleted tuple and write the cid.
-			//then update the tailer.
-
-			/*
-			 * interface:CommitDeleteData(data,cid);
-			 */
 			CommitDeleteData(table_id, index, cid, nid);
 			break;
 		default:
@@ -388,10 +256,10 @@ void AbortDataRecord(TransactionId tid, int trulynum)
 
 	DataMemStart=(char*)pthread_getspecific(DataMemKey);
 	start=DataMemStart+DataNumSize;
-	//transaction abort in function CommitTransaction.
+	// transaction abort in function CommitTransaction.
 	if(trulynum==-1)
 		num=*(int*)DataMemStart;
-	//transaction abort in function AbortTransaction.
+	// transaction abort in function AbortTransaction.
 	else
 		num=trulynum;
 
@@ -404,32 +272,12 @@ void AbortDataRecord(TransactionId tid, int trulynum)
 		switch(ptr->type)
 		{
 		case DataInsert:
-			//to do here.
-			//get the address of inserted tuple and free it's space.
-
-			/*
-			 * interface:AbortInsertData(data);
-			 */
 			AbortInsertData(table_id, index, nid);
 			break;
 		case DataUpdate:
-			//to do here.
-			//get the address of inserted and deleted tuple, and free the
-			//space of inserted, reset the space of deleted to original.
-
-			/*
-			 * interface:AbortUpdateData(data);
-			 */
 			AbortUpdateData(table_id, index, nid);
 			break;
 		case DataDelete:
-			//to do here.
-			//get the address of deleted tuple and reset the space to
-			//original.
-
-			/*
-			 * interface:AbortDeleteData(data);
-			 */
 			AbortDeleteData(table_id, index, nid);
 			break;
 		default:
@@ -445,7 +293,7 @@ void AbortDataRecord(TransactionId tid, int trulynum)
  */
 void DataRecordSort(DataRecord* dr, int num)
 {
-	//sort according to the table_id and tuple_id;
+	// sort according to the table_id and tuple_id;
 	DataRecord* ptr1, *ptr2;
 	DataRecord* startptr=dr;
 	DataRecord temp;
@@ -500,19 +348,18 @@ TupleId IsDataRecordVisible(char* DataMemStart, int table_id, TupleId tuple_id, 
 		{
 			if(ptr->type == DataDelete)
 			{
-				//the tuple has been deleted by current transaction.
+				// the tuple has been deleted by current transaction.
 				return -1;
 			}
 			else
 			{
-				//insert or update.
-				//return 1;
+				// insert or update.
 				return ptr->value;
 			}
 		}
 	}
 
-	//first access the tuple.
+	// first access the tuple.
 	return 0;
 }
 

@@ -1,8 +1,8 @@
 /*
  * type.h
  *
- *  Created on: 2015��11��9��
- *      Author: DELL
+ *  Created on: 2015-11-9
+ *      Author: XiaoXin
  */
 /*
  * data type is defined here.

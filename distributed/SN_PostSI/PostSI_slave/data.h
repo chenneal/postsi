@@ -1,6 +1,13 @@
+/*
+ * data.h
+ *
+ *  Created on: Jan 15, 2016
+ *      Author: Yu
+ */
+
 #ifndef DATA_H_
 #define DATA_H_
-/* add by yu the data structure for the tuple */
+
 #include <stdbool.h>
 #include "type.h"
 #define RECORDNUM 100000
@@ -14,10 +21,8 @@
 typedef struct {
 	TransactionId tid;
 	CommitId cid;
-
-	//to stock other information of each version.
+	// to stock other information of each version.
 	TupleId value;
-
 	bool deleted;
 } Version;
 
@@ -50,7 +55,7 @@ extern int BucketSize[TABLENUM];
 extern uint64_t RecordNum[TABLENUM];
 
 extern void InitRecord(void);
-//'tuple_id' is the key attributes, and 'value' is other attributes.
+
 extern void ProcessInsert(uint64_t * recv_buffer, int conn, int index);
 extern void ProcessTrulyInsert(uint64_t * recv_buffer, int conn, int index);
 extern void ProcessCommitInsert(uint64_t * recv_buffer, int conn, int index);

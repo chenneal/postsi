@@ -50,36 +50,32 @@ void EndReport(TransState* StateInfo, int terminals);
 
 void GetReady(void)
 {
-   //get the parameters from the configure file.
+   // get the parameters from the configure file.
    InitNetworkParam();
 
    InitConfig();
 
-   //connect the parameter server from the master node.
+   // connect the parameter server from the master node.
    InitParamClient();
-   //get the parameters from the master node.
 
+   // get the parameters from the master node.
    GetParam();
 
    /* connect the message server from the master node,
-	  the message server is used for inform the slave nodes
-	  that every nodes have loaded the data.
-   */
+	* the message server is used for inform the slave nodes
+	* that every nodes have loaded the data.
+    */
    InitMessageClient();
 
-   //he semaphore is used to synchronize the storage process and the transaction process.
+   // the semaphore is used to synchronize the storage process and the transaction process.
    InitSemaphore();
 
    InitProc();
    /*
-    * xxzhou: if the process-array is shared between storage and transaction, so is the process-array-lock.
+    * if the process-array is shared between storage and transaction, so is the process-array-lock.
     */
    InitProcLock();
    InitInvisibleTable();
-
-   // the lock should be seen global
-   //InitStorageLock();
-   //InitTransactionLock();
 }
 
 void BindShmem(void)
@@ -104,24 +100,15 @@ void BindShmem(void)
 
 void InitTransaction(void)
 {
-	//InitConfig();
-
 	SleepTime=1;
 
 	SetRandomSeed();
 
-	//initialize the memory space to be used.
+	// initialize the memory space to be used.
 	InitMem();
-	//initialize global conflict transactions table.
-	//InitInvisibleTable();
-	//initialize the process array and it's head.
-	//InitProc();
-
-	//initialize the assignment of global transaction ID.
-	//InitTransactionLock();
 	InitTransactionIdAssign();
 	InitClientBuffer();
-	//initialize pthread_key_t array for thread global variables.
+	// initialize pthread_key_t array for thread global variables.
 	InitThreadGlobalKey();
 }
 
@@ -145,8 +132,6 @@ void ThreadRun(int nthreads)
 	 */
 	for(i=0;i<nthreads;i++)
 	{
-		//to do
-		//bind each thread to CPU here.
 		err=pthread_create(&tid[i],NULL,ProcStart,(void*)(&a[i]));
 		if(err!=0)
 		{
@@ -165,11 +150,8 @@ void ThreadRun(int nthreads)
 
 void RunTerminals(int numTerminals)
 {
-	//getchar();
 	int i, j;
 	int terminalWarehouseID, terminalDistrictID;
-	//int paymentWeightValue, orderStatusWeightValue,deliveryWeightValue, stockLevelWeightValue;
-	//int transactionsPerTerminal, limPerMin_Terminal;
 	int usedTerminal[configWhseCount][10];
 	pthread_t tid[numTerminals];
 	pthread_barrier_t barrier;
@@ -209,7 +191,6 @@ void RunTerminals(int numTerminals)
 
 		runTerminal(terminalWarehouseID, terminalDistrictID, &tid[i], &barrier, &StateInfo[i]);
 
-		//sleep(RandomNumber(3,5));
 		sleep(SleepTime);
 	}
 
@@ -302,11 +283,10 @@ void EndReport(TransState* StateInfo, int terminals)
 	printf("session start at : %ld \n",sessionStartTimestamp);
 	printf("session end at : %ld %ld\n",sessionEndTimestamp, sessionEndTimestamp-sessionStartTimestamp);
 	printf("total rumtime is %d min, %d s\n", min, sec);
-	printf("transactionCount:%d, transactionCommit:%d, transactionAbort:%d, %d %d, %d %d %d\n",transactionCount, transactionCommit, transactionAbort, fastNewOrderCounter, transactionCount, runabort, endabort, otherabort);
+	printf("transactionCount:%ld, transactionCommit:%ld, transactionAbort:%ld, %ld %ld, %d %d %d\n",transactionCount, transactionCommit, transactionAbort, fastNewOrderCounter, transactionCount, runabort, endabort, otherabort);
 	for(i=0;i<terminals;i++)
 	{
 		printf("newOrder:%d %d, payment:%d %d, delivery:%d, orderStatus:%d, stockLevel:%d %d\n",StateInfo[i].NewOrder, StateInfo[i].NewOrder_C, StateInfo[i].Payment, StateInfo[i].Payment_C, StateInfo[i].Delivery, StateInfo[i].Order_status, StateInfo[i].Stock_level, StateInfo[i].Stock_level_C);
-	//printf("payment abort: %d, %d, %d, %d, %d, %d, %d, %d, %d, %d\n", StateInfo[i].Payment_1, StateInfo[i].Payment_2, StateInfo[i].Payment_3, StateInfo[i].Payment_4, StateInfo[i].Payment_5, StateInfo[i].Payment_6, StateInfo[i].Payment_7, StateInfo[i].Payment_8,  StateInfo[i].Payment_9, StateInfo[i].Payment_10);
 	}
 
         printf("nodenum = %d sleeptime=%d, terminals=%d\n", nodenum, SleepTime, terminals);

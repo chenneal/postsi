@@ -36,13 +36,13 @@ int stockLevelWeightValue;
 
 int limPerMin_Terminal;
 
-//the max number of wr-locks held in one transaction.
+// the max number of wr-locks held in one transaction.
 int MaxDataLockNum;
 
-//the max value of transaction ID for each thread (terminal).
+// the max value of transaction ID for each thread (terminal).
 int MaxTransId;
 
-//the limited max number of new orders for each district.
+// the limited max number of new orders for each district.
 int OrderMaxNum;
 
 void InitConfig(void)
@@ -50,9 +50,10 @@ void InitConfig(void)
 	//transPerTerminal
    transactionsPerTerminal=2000;
 
-	//we didn't build index on tables, so range query in order-status and delivery transactions are very slow,
-	//there we set 'orderStatusWeightValue' and 'deliveryWeightValue' to '0', so we actually didn't implement
-	//those two transactions order-status transaction and delivery transaction.
+	/* we didn't build index on tables, so range query in order-status and delivery transactions are very slow,
+	 * there we set 'orderStatusWeightValue' and 'deliveryWeightValue' to '0', so we actually didn't implement
+	 * those two transactions order-status transaction and delivery transaction.
+	 */
    paymentWeightValue=43;
    orderStatusWeightValue=0;
    deliveryWeightValue=0;
