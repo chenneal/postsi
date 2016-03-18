@@ -5,6 +5,8 @@ To run the code, following conditions should be satisfied basically:
 
 ## config.txt
 
+In the MPP platform with shared nothing architecture, we choose a machine node to act as the master node, and others as the slave nodes. To run the code, we should deploy the source code under the directory `SI_master` in the master node, and the source code under the directory `SI_slave` in the slave nodes. Following are the configure details for the master node and slave nodes.
+
 ### master
 
 the configure file will look like this
@@ -27,6 +29,7 @@ clientport: 4000
 + clientport: the port is send as a parameter from the master node to the slave nodes.
 
 ### slave
+
 ```
 masterip: 127.0.0.1
 messageport: 8000
@@ -48,7 +51,7 @@ nodeip4: 127.0.0.1
 + nodeid: The unique ID for every slave node in the system, this ID should be consecutive integer start with 0.
 + nodeip+nodeid: IP list of all the slave nodes in the distributed system.
 
-## benchmark configure parameters
+## benchmark configure parameters (in slave source code directory)
 
 To run the code in different conditions, we should change the value of some parameters. Those parameters are all in the source file 'config.c', following are the details of those parameters:
 

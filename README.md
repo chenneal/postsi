@@ -47,7 +47,7 @@ make
 ./PSI
 ```
 
-## Distributed Version 
+## Distributed Installation 
 
 Before install the distributed versions, you'd better know the list below:
 
