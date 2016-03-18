@@ -8,19 +8,26 @@ To run the code, following conditions should be satisfied basically:
 To run the code in different conditions, we should change the value of some parameters. Those parameters are all in the source file 'config.c', following are the details of those parameters:
 
 ```
-int configWhseCount; /* number of warehouses, set to different value to test different data scale. */
+/* number of warehouses, set to different value to test different data scale. */
+int configWhseCount; 
 
-int configCommitCount; /* max number of tuples operated in one transaction, or the max length of one transaction. */
+/* max number of tuples operated in one transaction, or the max length of one transaction. */
+int configCommitCount; 
 
-int transactionsPerTerminal; /* number of transactions per terminal. */
+/* number of transactions per terminal. */
+int transactionsPerTerminal; 
 
-int paymentWeightValue, orderStatusWeightValue, deliveryWeightValue, stockLevelWeightValue; /* ratio of each transaction in one terminal */
+/* ratio of each transaction in one terminal */
+int paymentWeightValue, orderStatusWeightValue, deliveryWeightValue, stockLevelWeightValue; 
 
-int NumTerminals; /* the num of terminals when running TPCC benchmark, make sure that 'NumTerminals' <= 'MAXPROCS'. */
+/* the num of terminals when running TPCC benchmark, make sure that 'NumTerminals' <= 'MAXPROCS'. */
+int NumTerminals; 
 
-int OrderMaxNum; /* the limited max number of new orders for each district, if there is no enough space, this value should be larger. */
+/* the limited max number of new orders for each district, if there is no enough space, this value should be larger. */
+int OrderMaxNum; 
 
-int MaxDataLockNum; /* the max number of wr-locks held in one transaction, there is no need to change this value. */
+/* the max number of wr-locks held in one transaction, there is no need to change this value. */
+int MaxDataLockNum; 
 ```
 
 there is no need to change other parameters except above listed parameters.
