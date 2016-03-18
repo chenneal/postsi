@@ -6,6 +6,7 @@
  */
 #include<malloc.h>
 #include<stdlib.h>
+#include"config.h"
 #include"mem.h"
 #include"thread_global.h"
 #include"proc.h"

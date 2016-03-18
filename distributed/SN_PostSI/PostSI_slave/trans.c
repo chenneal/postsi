@@ -28,9 +28,6 @@ TransactionId thread_0_tid;
 
 static IDMGR* CentIdMgr;
 
-/* the max number of transaction ID for per process. */
-int MaxTransId=1000000;
-
 StartId AssignTransactionStartId(TransactionId tid);
 
 CommitId AssignTransactionCommitId(TransactionId tid);

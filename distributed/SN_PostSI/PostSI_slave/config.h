@@ -34,6 +34,12 @@ extern int deliveryWeightValue;
 extern int stockLevelWeightValue;
 extern int limPerMin_Terminal;
 
+extern int MaxDataLockNum;
+
+extern int MaxTransId;
+
+extern int OrderMaxNum;
+
 extern void InitConfig(void);
 
 #endif /* CONFIG_H_ */

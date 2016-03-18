@@ -36,6 +36,10 @@ extern int limPerMin_Terminal;
 
 extern int NumTerminals;
 
+extern int OrderMaxNum;
+
+extern int MaxDataLockNum;
+
 extern void InitConfig(void);
 
 #endif /* CONFIG_H_ */

@@ -7,6 +7,7 @@
 
 #include <pthread.h>
 #include <assert.h>
+#include "config.h"
 #include "communicate.h"
 #include "timestamp.h"
 #include "data.h"
@@ -157,9 +158,9 @@ void InitBucketNum_Size(void)
 	BucketSize[District_ID]=configDistPerWhse;
 	BucketSize[Customer_ID]=configCustPerDist;
 	BucketSize[History_ID]=configCustPerDist;
-	BucketSize[Order_ID]=4000;
-	BucketSize[NewOrder_ID]=4000;
-	BucketSize[OrderLine_ID]=40000;
+	BucketSize[Order_ID]=OrderMaxNum;
+	BucketSize[NewOrder_ID]=OrderMaxNum;
+	BucketSize[OrderLine_ID]=OrderMaxNum*10;
 
 	/* adapt the bucket-size to prime. */
 	ReadPrimeTable();

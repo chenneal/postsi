@@ -12,6 +12,7 @@
 #include<stdbool.h>
 #include<stdint.h>
 #include<sys/socket.h>
+#include"config.h"
 #include"lock_record.h"
 #include"mem.h"
 #include"thread_global.h"
@@ -19,8 +20,6 @@
 #include"socket.h"
 #include"trans.h"
 #include"communicate.h"
-
-int MaxDataLockNum=100;
 
 int LockHash(int table_id, int tuple_id, int node_id);
 

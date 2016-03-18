@@ -13,6 +13,7 @@
 #include<stdlib.h>
 #include<sys/shm.h>
 #include<sys/socket.h>
+#include "config.h"
 #include "type.h"
 #include "proc.h"
 #include "mem.h"

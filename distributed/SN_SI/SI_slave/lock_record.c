@@ -11,13 +11,12 @@
  */
 #include<stdbool.h>
 #include<stdint.h>
+#include"config.h"
 #include"trans.h"
 #include"communicate.h"
 #include"lock_record.h"
 #include"mem.h"
 #include"thread_global.h"
-
-int MaxDataLockNum=80;
 
 int LockHash(int table_id, TupleId tuple_id, int node_id);
 

@@ -33,8 +33,6 @@ struct TransactionData
 	CommitId cid_min;
 };
 
-extern int MaxTransId;
-
 extern TransactionId thread_0_tid;
 
 typedef struct TransactionData TransactionData;

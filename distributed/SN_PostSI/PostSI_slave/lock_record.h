@@ -27,8 +27,6 @@ struct DataLock
 
 typedef struct DataLock DataLock;
 
-extern int MaxDataLockNum;
-
 extern void InitDataLockMem(void);
 
 extern int DataLockInsert(DataLock* lock);
