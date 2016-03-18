@@ -11,7 +11,7 @@ git clone https://github.com/jlumqz/postsi.git
 
 The single-machine version is easy to install, you only need find the right directory and compile the source code. You can just use a few command below to complete the installation：
 
-### SI Version
+### Conventional Snapshot Isolation
 
 find directory 
 ```
@@ -28,9 +28,9 @@ make
 ./SI
 ```
 
-### PostSI Version
+### Posterior Snapshot Isolation
 
-The PostSI version have the similar steps as above:
+The PostSI have the similar steps as above:
 
 find directory 
 ```
@@ -49,15 +49,15 @@ make
 
 ## Distributed Installation 
 
-Before install the distributed versions, you'd better know the list below:
+Before install the distributed version, you'd better know the list below:
 
 + Two versions both have two directory of slave and the master, which contains the source code file, you should compile them separately.
 
-+ Before run the slave nodes, you should run the master node first. The order here should never be changed, otherwise the slave can not start-up normally.
++ Before run the slave nodes, you should run the master node firstly. The order here should never be changed, otherwise the slave can not start-up normally.
 
 + You can run the two versions of distributed system either in stand-alone environment( use loop IP address ) or in cluster environment. The Only thing you need to do is to configure the `config.txt`.
 
-### SI Version
+### Conventional Snapshot Isolation
 
 #### master
 
@@ -71,7 +71,7 @@ cd SN_SI
 
 cd SN_master
 ```
-complie && run
+compile && run
 ```
 make
 
@@ -90,14 +90,14 @@ cd SN_SI
 
 cd SI_slave
 ```
-complie && run
+compile && run
 ```
 make
 
 ./slave
 ```
 
-### PostSI Version
+### Posterior Snapshot Isolation
 
 #### master
 
@@ -111,7 +111,7 @@ cd SN_PostSI
 
 cd PostSI_master
 ```
-complie && run
+compile && run
 ```
 make
 
@@ -130,13 +130,13 @@ cd SN_SI
 
 cd PostSI_slave
 ```
-complie && run
+compile && run
 ```
 make
 
 ./slave
 ```
 
-If you are confused in details, please look up the README.md in respective directory. 
+If you are confused in details, please look up the README.md in corresponding directory. 
 
 Have fun :)
