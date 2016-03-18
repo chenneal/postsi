@@ -2,6 +2,7 @@ The code is ready for post snapshot isolation in single machine (shared everythi
 To run the code, following conditions should be satisfied basically:
 + Linux operating system.
 + GCC compiler.
++ A cluster of machines interconnected through TCP/IP sockets or a single machine support TCP/IP protocol.
 
 ## Deployment
 

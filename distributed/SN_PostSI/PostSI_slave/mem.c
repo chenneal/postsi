@@ -25,20 +25,31 @@ uint32_t ThreadReuseMemStartCompute(void)
 	uint32_t size=0;
 
 	size+=sizeof(PMHEAD);
+	//printf("size=%d\n",size);
 
 	size+=sizeof(THREAD);
+	//printf("size=%d\n",size);
 
 	size+=sizeof(TransactionData);
+	//printf("size=%d\n",size);
+
+	//size+=SnapshotSize();
+	//printf("size=%d, %d\n",size, SnapshotSize());
+
+	//size+=sizeof(TransactionId)*MAXPROCS;
+	//printf("size=%d\n",size);
 
 	size+=DataMemSize();
+	//printf("size=%d\n",size);
 
 	size+=MaxDataLockNum*sizeof(DataLock);
 
-	/* NewReadList */
-	size+=sizeof(TransactionId)*(NODENUM*THREADNUM);
+	//NewReadList
+	size+=sizeof(TransactionId)*(NODENUM*THREADNUM+1);
 
-	/* OldReadList */
-	size+=sizeof(TransactionId)*(NODENUM*THREADNUM);
+	//OldReadList
+	size+=sizeof(TransactionId)*(NODENUM*THREADNUM+1);
+	//printf("size=%d\n",size);
 
 	return size;
 }
@@ -52,7 +63,7 @@ void InitMem(void)
 	ThreadReuseMemStart=ThreadReuseMemStartCompute();
 
 	Size size=MEM_TOTAL_SIZE;
-
+	//printf("size=%d\n",size);
 	char* start=NULL;
 	MemStart=(char*)malloc(size);
 	if(MemStart==NULL)
@@ -107,7 +118,7 @@ void* MemAlloc(void* memstart,Size size)
 
 	if(!newSpace)
 	{
-		printf("out of memory for process %ld\n",pthread_self());
+		printf("out of memory for process %d\n",pthread_self());
 		exit(-1);
 	}
 	return newSpace;
@@ -119,7 +130,10 @@ void* MemAlloc(void* memstart,Size size)
 void MemClean(void *memstart)
 {
 	PMHEAD* pmhead=NULL;
-	/* reset process memory. */
+	Size newStart;
+	Size newFree;
+
+	//reset process memory.
 	memset((char*)memstart,0,MEM_PROC_SIZE);
 
 	pmhead=(PMHEAD*)memstart;

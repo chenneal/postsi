@@ -28,7 +28,6 @@ int main(int argc, char *argv[])
 
     else if(pid == 0)
     {
-    	/* shmget the shared memory address*/
     	BindShmem();
 
     	InitStorage();
@@ -39,14 +38,12 @@ int main(int argc, char *argv[])
     else
     {
     	InitTransaction();
-
-    	/* load the benchmark data */
     	dataLoading();
-    	/* wait other nodes in the distributed system prepare the data */
     	WaitDataReady();
-    	/* run the benchmark */
     	RunTerminals(THREADNUM);
+    	//ThreadRun(THREADNUM);
 
+    	// wait to print the table
     	printf("transaction process finished.\n");
     }
 	return 0;

@@ -27,6 +27,13 @@ void SetRandomSeed(void)
 
 int RandomNumber(int min, int max)
 {
+	/*
+	if(!randomset)
+	{
+		srand((unsigned)time(NULL));
+		randomset=true;
+	}
+	*/
 	unsigned int* seed;
 
 	seed=(unsigned int*)pthread_getspecific(RandomSeedKey);
@@ -46,12 +53,15 @@ int nonUniformRandom(int v, int min, int max)
 
 int getCustomerID(void)
 {
-	/* change the parameter here. */
+	//to do here.
+	//change the parameter here.
 	return nonUniformRandom(1023, 1, configCustPerDist);
 }
 
 int getItemID(void)
 {
-	/* change the parameter here. */
+	//to do here.
+	//change the parameter here.
 	return nonUniformRandom(8191, 1, configUniqueItems);
+	//return RandomNumber(1, configUniqueItems);
 }

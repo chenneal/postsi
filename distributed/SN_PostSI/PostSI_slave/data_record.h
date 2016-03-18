@@ -23,7 +23,7 @@ typedef enum UpdateType
 	DataUpdate,
 	//data delete
 	DataDelete
-} UpdateType;
+}UpdateType;
 
 struct DataRecord
 {
@@ -41,10 +41,15 @@ struct DataRecord
 	//node id in the distributed system
 	int node_id;
 };
-
 typedef struct DataRecord DataRecord;
 
 extern void InitDataMem(void);
+
+//extern void InsertRecord(void* data);
+
+//extern void UpdateRecord(void* olddata,void* newdata);
+
+//extern void DeleteRecord(void* data);
 
 extern void DataRecordInsert(DataRecord* datard);
 

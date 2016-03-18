@@ -1,10 +1,9 @@
 /*
  * proc.h
  *
- *  Created on: 2015-11-9
- *      Author: Xiao Xin
+ *  Created on: 2015��11��9��
+ *      Author: DELL
  */
-
 /*
  * per process information's structure.
  */

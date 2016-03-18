@@ -5,7 +5,6 @@
  *      Author: xiaoxin
  */
 #include<stdlib.h>
-#include<time.h>
 #include"timestamp.h"
 
 TimeStampTz GetCurrentTimestamp(void)

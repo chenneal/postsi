@@ -73,10 +73,21 @@ typedef struct TransState
 	int runabort;
 	int endabort;
 	int otherabort;
-
+        
 	int NewOrder_C;
 	int Payment_C;
 	int Stock_level_C;
+
+	int Payment_1;
+	int Payment_2;
+	int Payment_3;
+	int Payment_4;
+	int Payment_5;
+	int Payment_6;
+	int Payment_7;
+	int Payment_8;
+	int Payment_9;
+	int Payment_10;
 }TransState;
 
 extern int newOrderTransaction(int w_id, int d_id, int c_id, int o_ol_cnt, int o_all_local, int *itemIDs, int *supplierWarehouseIDs, int *orderQuantities, int* node_id, int node_num);

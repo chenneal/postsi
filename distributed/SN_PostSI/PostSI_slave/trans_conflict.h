@@ -18,18 +18,26 @@
 
 #define ConfTrue 1
 #define ConfFalse 0
+/*
+struct TransConflict
+{
+	TransactionId fromId;
+	TransactionId toId;
+};
 
+typedef struct TransConflict TransConf;
+*/
 typedef TransactionId TransConf;
 
 extern TransConf* TransConfPtr;
 
-/* pointer to global conflict transactions table. */
-extern TransConf* TransConfTable;
+extern TransConf* TransConfTable; //pointer to global conflict transactions table.
 
 extern int invisible_shmid;
 
 extern void InitInvisibleTable(void);
 
+//extern void ConflictTableInsert(TransConf* transconf,int row_index,int column_index);
 extern void InvisibleTableInsert(int row_index,int column_index,TransactionId tid);
 
 extern void InvisibleTableReset(int row,int column);

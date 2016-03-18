@@ -34,6 +34,4 @@ extern void dataLoading(void);
 
 extern void InitSemaphore(void);
 
-#endif
-
-/* THREADMAIN_H_ */
+#endif /* THREADMAIN_H_ */

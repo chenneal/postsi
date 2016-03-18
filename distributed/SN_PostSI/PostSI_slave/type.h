@@ -1,10 +1,9 @@
 /*
  * type.h
  *
- *  Created on: 2015-11-9
- *      Author: XiaoXin
+ *  Created on: 2015��11��9��
+ *      Author: DELL
  */
-
 /*
  * data type is defined here.
  */
@@ -39,6 +38,7 @@ typedef enum command
    cmd_commitinsert,
    cmd_abortinsert,
    cmd_updatefind,
+   cmd_updatewritelistinsert,
    cmd_updateconflict,
    cmd_updateversion,
    cmd_commitupdate,
