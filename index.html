@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="UTF-8">
+    <title>Postsi by jlumqz</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="stylesheets/normalize.css" media="screen">
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
+  </head>
+  <body>
+    <section class="page-header">
+      <h1 class="project-name">Postsi</h1>
+      <h2 class="project-tagline"></h2>
+      <a href="https://github.com/jlumqz/postsi" class="btn">View on GitHub</a>
+      <a href="https://github.com/jlumqz/postsi/zipball/master" class="btn">Download .zip</a>
+      <a href="https://github.com/jlumqz/postsi/tarball/master" class="btn">Download .tar.gz</a>
+    </section>
+
+    <section class="main-content">
+      <h2>
+<a id="introduction" class="anchor" href="#introduction" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Introduction</h2>
+
+<p>We implemented the PostSI schedulers in both Single-machine with Shared-Everything(SE) architectures and MPP platform with Shared-Nothing(SN) architectures, and for comparison purpose, we implemented two conventional SI schedulers for the SE and SN architectures respectively. To run the code, Linux operating system and GCC compiler are needed. You can view our code in <a href="https://github.com/jlumqz/postsi.git">GitHub</a></p>
+
+<h2>
+<a id="get-the-code" class="anchor" href="#get-the-code" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Get the code</h2>
+
+<p>You can get our code from the master branch of our postsi repository. Simply use the single command below:</p>
+
+<pre><code>git clone https://github.com/jlumqz/postsi.git
+</code></pre>
+
+<h2>
+<a id="stand-alone-installation" class="anchor" href="#stand-alone-installation" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Stand-alone Installation</h2>
+
+<p>The single-machine version is easy to install, you only need find the right directory and compile the source code. You can just use a few command below to complete the installation：</p>
+
+<h3>
+<a id="conventional-snapshot-isolation" class="anchor" href="#conventional-snapshot-isolation" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Conventional Snapshot Isolation</h3>
+
+<p>find directory </p>
+
+<pre><code>cd postsi
+
+cd stand-alone
+
+cd SE_SI
+</code></pre>
+
+<p>compile &amp;&amp; run</p>
+
+<pre><code>make
+
+./SI
+</code></pre>
+
+<h3>
+<a id="posterior-snapshot-isolation" class="anchor" href="#posterior-snapshot-isolation" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Posterior Snapshot Isolation</h3>
+
+<p>The PostSI have the similar steps as above:</p>
+
+<p>find directory </p>
+
+<pre><code>cd postsi
+
+cd stand-alone
+
+cd SE_PostSI
+</code></pre>
+
+<p>compile &amp;&amp; run</p>
+
+<pre><code>make
+
+./PSI
+</code></pre>
+
+<h2>
+<a id="distributed-installation" class="anchor" href="#distributed-installation" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Distributed Installation</h2>
+
+<p>Before install the distributed version, you'd better know the list below:</p>
+
+<ul>
+<li><p>Two versions both have two directory of slave and the master, which contains the source code file, you should compile them separately.</p></li>
+<li><p>Before run the slave nodes, you should run the master node firstly. The order here should never be changed, otherwise the slave can not start-up normally.</p></li>
+<li><p>You can run the two versions of distributed system either in stand-alone environment( use loop IP address ) or in cluster environment. The Only thing you need to do is to configure the <code>config.txt</code>.</p></li>
+</ul>
+
+<h3>
+<a id="conventional-snapshot-isolation-1" class="anchor" href="#conventional-snapshot-isolation-1" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Conventional Snapshot Isolation</h3>
+
+<h4>
+<a id="master" class="anchor" href="#master" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>master</h4>
+
+<p>find directory</p>
+
+<pre><code>cd postsi
+
+cd distributed
+
+cd SN_SI
+
+cd SN_master
+</code></pre>
+
+<p>compile &amp;&amp; run</p>
+
+<pre><code>make
+
+./master
+</code></pre>
+
+<h4>
+<a id="slave" class="anchor" href="#slave" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>slave</h4>
+
+<p>find directory</p>
+
+<pre><code>cd postsi
+
+cd distributed
+
+cd SN_SI
+
+cd SI_slave
+</code></pre>
+
+<p>compile &amp;&amp; run</p>
+
+<pre><code>make
+
+./slave
+</code></pre>
+
+<h3>
+<a id="posterior-snapshot-isolation-1" class="anchor" href="#posterior-snapshot-isolation-1" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Posterior Snapshot Isolation</h3>
+
+<h4>
+<a id="master-1" class="anchor" href="#master-1" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>master</h4>
+
+<p>find directory</p>
+
+<pre><code>cd postsi
+
+cd distributed
+
+cd SN_PostSI
+
+cd PostSI_master
+</code></pre>
+
+<p>compile &amp;&amp; run</p>
+
+<pre><code>make
+
+./master
+</code></pre>
+
+<h4>
+<a id="slave-1" class="anchor" href="#slave-1" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>slave</h4>
+
+<p>find directory</p>
+
+<pre><code>cd postsi
+
+cd distributed
+
+cd SN_SI
+
+cd PostSI_slave
+</code></pre>
+
+<p>compile &amp;&amp; run</p>
+
+<pre><code>make
+
+./slave
+</code></pre>
+
+<p>If you are confused in details, please look up the README.md in corresponding directory. </p>
+
+<p>Have fun :)</p>
+
+      <footer class="site-footer">
+        <span class="site-footer-owner"><a href="https://github.com/jlumqz/postsi">Postsi</a> is maintained by <a href="https://github.com/jlumqz">jlumqz</a>.</span>
+
+        <span class="site-footer-credits">This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the <a href="https://github.com/jasonlong/cayman-theme">Cayman theme</a> by <a href="https://twitter.com/jasonlong">Jason Long</a>.</span>
+      </footer>
+
+    </section>
+
+  
+  </body>
+</html>
