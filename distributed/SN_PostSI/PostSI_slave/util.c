@@ -46,10 +46,12 @@ int nonUniformRandom(int v, int min, int max)
 
 int getCustomerID(void)
 {
+	/* change the parameter here. */
 	return nonUniformRandom(1023, 1, configCustPerDist);
 }
 
 int getItemID(void)
 {
+	/* change the parameter here. */
 	return nonUniformRandom(8191, 1, configUniqueItems);
 }

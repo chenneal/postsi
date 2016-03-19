@@ -4,7 +4,6 @@
  *  Created on: Nov 10, 2015
  *      Author: xiaoxin
  */
-
 /*
  * transaction actions are defined here.
  */
@@ -87,8 +86,6 @@ void InitTransactionStructMemAlloc(void)
 	char* memstart;
 	Size size;
 
-	int* ThreadSidMin;
-
 	threadinfo=(THREAD*)pthread_getspecific(ThreadInfoKey);
 	memstart=threadinfo->memstart;
 
@@ -104,25 +101,14 @@ void InitTransactionStructMemAlloc(void)
 
 	pthread_setspecific(TransactionDataKey,td);
 
-	// to set data memory.
+	/* to set data memory. */
 	InitDataMemAlloc();
 
-	// to set data-lock memory.
+	/* to set data-lock memory. */
 	InitDataLockMemAlloc();
 
-	// to set read-list memory.
+	/* to set read-list memory. */
 	InitReadListMemAlloc();
-
-	ThreadSidMin=(int*)malloc(sizeof(int));
-
-	if(ThreadSidMin==NULL)
-	{
-		printf("ThreadSidMin allocation error\n");
-		exit(-1);
-	}
-
-	*ThreadSidMin=0;
-	pthread_setspecific(SidMinKey, ThreadSidMin);
 }
 
 /*
@@ -139,10 +125,6 @@ void StartTransaction(void)
 	int index;
 	int lindex;
 
-	int* ThreadSidMin;
-
-	ThreadSidMin=(int*)pthread_getspecific(SidMinKey);
-
 	threadinfo=(THREAD*)pthread_getspecific(ThreadInfoKey);
 	memstart=threadinfo->memstart;
 	index=threadinfo->index;
@@ -160,15 +142,15 @@ void StartTransaction(void)
 
 	pthread_setspecific(TransactionDataKey,td);
 
-	// to set data memory.
+	/* to set data memory. */
 	InitDataMem();
-	// to set data-lock memory.
+	/* to set data-lock memory. */
 	InitDataLockMem();
 
-	// to set read-list memory.
+	/* to set read-list memory. */
 	InitReadListMem();
 
-	// assign transaction ID here.
+	/* assign transaction ID here. */
 	td->tid=AssignTransactionId();
 
 	if(!TransactionIdIsValid(td->tid))
@@ -177,19 +159,18 @@ void StartTransaction(void)
 		return;
 	}
 
-	// transaction ID assignment succeeds.
+	/* transaction ID assignment succeeds. */
 	td->sid_min=0;
 	td->cid_min=0;
 	td->sid_max=MAXINTVALUE;
 
 	proc=(PROC*)((char*)procbase+lindex*sizeof(PROC));
 
+	/* to hold lock here. */
 	pthread_spin_lock(&ProcArrayElemLock[lindex]);
-
 	proc->pid=pthread_self();
 	proc->tid=td->tid;
 	proc->sid_min=0;
-
 	proc->sid_max=MAXINTVALUE;
 	proc->cid_min=0;
 	pthread_spin_unlock(&ProcArrayElemLock[lindex]);
@@ -204,13 +185,7 @@ int CommitTransaction(void)
 	THREAD* threadinfo;
 	int index, lindex;
 	int result;
-
-	bool confirm=true;
-
-	int* ThreadSidMin;
-
-	ThreadSidMin=(int*)pthread_getspecific(SidMinKey);
-
+        bool confirm = true;
 	tdata=(TransactionData*)pthread_getspecific(TransactionDataKey);
 	tid=tdata->tid;
 
@@ -225,18 +200,19 @@ int CommitTransaction(void)
 
 	if(!ConfirmIdAssign(&sid, &cid))
 	{
+		//printf("TID:%d, sid:%d, cid:%d\n",tid, sid, cid);
 		confirm=false;
 	}
-
+	
+	/* transaction can commit. */
 	if(confirm && !CommitInvisibleUpdate(index,sid,cid))
 	{
+		/* to make sure that cid > sid. */
 		if(cid==sid)cid+=1;
 		CommitDataRecord(tid,cid);
 		result=0;
-
-		if(*ThreadSidMin < cid)
-			*ThreadSidMin=cid;
 	}
+	/* transaction has to roll back. */
 	else
 	{
 		SetProcAbort(lindex);
@@ -249,9 +225,10 @@ int CommitTransaction(void)
 
 	AtEnd_InvisibleTable(index);
 
-	// by here, we consider that the transaction committed successfully or abort successfully.
+	/* by here, we consider that the transaction committed successfully or abort successfully. */
 	AtEnd_ProcArray(index);
 
+	/* clean the transaaction's memory. */
 	TransactionMemClean();
 
 	return result;
@@ -279,19 +256,20 @@ void AbortTransaction(int trulynum)
 
 	DataLockRelease();
 
-	// reset the row by 'index' of invisible-table/
+	/* reset the row by 'index' of invisible-table */
 	AtEnd_InvisibleTable(index);
 
-	// by here, we consider that the transaction abort successfully.
+	/* by here, we consider that the transaction abort successfully. */
 	AtEnd_ProcArray(index);
 
+	/* clean the transaaction's memory. */
 	TransactionMemClean();
 }
 
 void ReleaseDataConnect(void)
 {
 	if (Send1(0, nodeid, cmd_release) == -1)
-		printf("release data connect server %d send error\n");
+		printf("release data connect server send error\n");
 }
 
 void ReleaseConnect(void)
@@ -304,7 +282,6 @@ void ReleaseConnect(void)
 	index=threadinfo->index;
 	int lindex;
 	lindex = GetLocalIndex(index);
-
 	for (i = 0; i < nodenum; i++)
 	{
 		if (Send1(lindex, i, cmd_release) == -1)
@@ -314,31 +291,30 @@ void ReleaseConnect(void)
 
 void TransactionRunSchedule(void* args)
 {
-	// to run transactions according to args.
-	int i,result;
-	int index, type;
-	terminalArgs* param=(terminalArgs*)args;
-	type=param->type;
-	THREAD* threadinfo=(THREAD*)pthread_getspecific(ThreadInfoKey);
+   /* to run transactions according to args. */
+   int type;
 
-	if(type==0)
-	{
-		printf("begin LoadData......\n");
-		LoadData();
+   terminalArgs* param=(terminalArgs*)args;
+   type=param->type;
 
-		thread_0_tid=threadinfo->curid;
-		ResetMem(0);
-		ResetProc();
-		ReleaseDataConnect();
-	}
-	else
-	{
-		printf("begin execute transactions...\n");
-		executeTransactions(transactionsPerTerminal, param->whse_id, param->dist_id, param->StateInfo);
-		ReleaseConnect();
-	}
+   THREAD* threadinfo=(THREAD*)pthread_getspecific(ThreadInfoKey);
+
+   if(type==0)
+   {
+      printf("begin LoadData......\n");
+	  LoadData();
+	  thread_0_tid=threadinfo->curid;
+	  ResetMem(0);
+	  ResetProc();
+	  ReleaseDataConnect();
+   }
+   else
+   {
+      printf("begin execute transactions...\n");
+	  executeTransactions(transactionsPerTerminal, param->whse_id, param->dist_id, param->StateInfo);
+	  ReleaseConnect();
+   }
 }
-
 
 /*
  * get current transaction data, return it's pointer.
@@ -428,7 +404,7 @@ int PreCommit(int* index)
 
 	num=*(int*)DataMemStart;
 
-	// sort the data-operation records.
+	/* sort the data-operation records. */
 	DataRecordSort((DataRecord*)start, num);
 
 	for(i=0;i<num;i++)
@@ -457,7 +433,6 @@ int PreCommit(int* index)
 		}
 		if(result == -1)
 		{
-			// return to rollback.
 			*index=i;
 			return -1;
 		}
@@ -494,12 +469,13 @@ int ConfirmIdAssign(StartId* sid, CommitId* cid)
 	pthread_spin_lock(&ProcArrayElemLock[lindex]);
 	if(*sid > proc->sid_max)
 	{
-		// abort current transaction.
+		//abort current transaction.
 		pthread_spin_unlock(&ProcArrayElemLock[lindex]);
 		return 0;
 	}
 
 	*cid=(proc->cid_min > (*cid))?proc->cid_min:(*cid);
+	//assert(*cid >= *sid);
 
 	*cid=((*sid+1) > *cid) ? (*sid+1) : *cid;
 

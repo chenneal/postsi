@@ -30,7 +30,7 @@ void InitDataLockMemAlloc(void)
 	char* memstart;
 	THREAD* threadinfo;
 
-	// get start address of current thread's memory.
+	//get start address of current thread's memory.
 	threadinfo=(THREAD*)pthread_getspecific(ThreadInfoKey);
 	memstart=threadinfo->memstart;
 
@@ -40,11 +40,11 @@ void InitDataLockMemAlloc(void)
 
 	if(DataLockMemStart == NULL)
 	{
-		printf("thread memory allocation error for data lock  memory.PID:%d\n",pthread_self());
+		printf("thread memory allocation error for data lock  memory.PID:%ld\n",pthread_self());
 		return;
 	}
 
-	// allocation succeed, set to thread global variable.
+	/* allocation succeed, set to thread global variable. */
 	pthread_setspecific(DatalockMemKey,DataLockMemStart);
 }
 
@@ -53,8 +53,6 @@ void InitDataLockMem(void)
 {
 	Size size;
 	char* DataLockMemStart;
-	char* memstart;
-	THREAD* threadinfo;
 
 	DataLockMemStart=(char*)pthread_getspecific(DatalockMemKey);
 	size=MaxDataLockNum*sizeof(DataLock);
@@ -86,13 +84,13 @@ int DataLockInsert(DataLock* lock)
 	{
 		if(search > MaxDataLockNum)
 		{
-			// there is no free space.
+			/* there is no free space. */
 			flag=2;
 			break;
 		}
 		if(lockptr->table_id==lock->table_id && lockptr->tuple_id==lock->tuple_id && lockptr->node_id==node_id)
 		{
-			// the lock already exists.
+			/* the lock already exists. */
 			flag=1;
 			break;
 		}
@@ -103,7 +101,7 @@ int DataLockInsert(DataLock* lock)
 
 	if(flag==0)
 	{
-		// succeed in finding free space, so insert it.
+		/* succeed in finding free space, so insert it. */
 		lockptr->table_id=lock->table_id;
 		lockptr->tuple_id=lock->tuple_id;
 		lockptr->lockmode=lock->lockmode;
@@ -113,12 +111,12 @@ int DataLockInsert(DataLock* lock)
 	}
 	else if(flag==1)
 	{
-		// already exists.
+		/* already exists. */
 		return -1;
 	}
 	else
 	{
-		// no more free space.
+		/* no more free space. */
 		printf("no more free space for lock.\n");
 		return 0;
 	}
@@ -127,7 +125,6 @@ int DataLockInsert(DataLock* lock)
 int LockHash(int table_id, int tuple_id, int node_id)
 {
 	int value;
-	// to change the calculation.
 	value=((node_id*10)%MaxDataLockNum+(table_id*10)%MaxDataLockNum+tuple_id%10)%MaxDataLockNum;
 	return value;
 }
@@ -139,22 +136,23 @@ void DataLockRelease(void)
 	int index2;
 	char* DataLockMemStart;
 	DataLock* lockptr;
+    int status;
+
 	threadinfo = (THREAD*)pthread_getspecific(ThreadInfoKey);
 	index2 = threadinfo->index;
 	int lindex;
 	lindex = GetLocalIndex(index2);
-	// get current transaction's pointer to data-lock memory
+	/* get current transaction's pointer to data-lock memory */
 	DataLockMemStart=(char*)pthread_getspecific(DatalockMemKey);
-	// release all locks that current transaction holds.
+	/* release all locks that current transaction holds. */
 	for(index=0;index<MaxDataLockNum;index++)
 	{
 		lockptr=(DataLock*)(DataLockMemStart+index*sizeof(DataLock));
-		// wait to change.
 		if(lockptr->tuple_id > 0)
 		{
-            if ((Send3(lindex, lockptr->node_id, cmd_unrwlock, lockptr->table_id, lockptr->index)) == -1)
-            	printf("lock send error\n");
-            if ((Recv(lindex, lockptr->node_id, 1)) == -1)
+			if ((Send3(lindex, lockptr->node_id, cmd_unrwlock, lockptr->table_id, lockptr->index)) == -1)
+				printf("lock send error\n");
+			if ((Recv(lindex, lockptr->node_id, 1)) == -1)
             	printf("lock recv error\n");
 		}
 	}
@@ -170,13 +168,14 @@ int IsDataLockExist(int table_id, TupleId tuple_id, int node_id, LockMode mode)
 	DataLock* lockptr;
 	char* DataLockMemStart;
 
-	// get current transaction's pointer to data-lock memory
+	/*get current transaction's pointer to data-lock memory */
 	DataLockMemStart=(char*)pthread_getspecific(DatalockMemKey);
 	index=LockHash(table_id,tuple_id,node_id);
 	lockptr=(DataLock*)(DataLockMemStart+index*sizeof(DataLock));
 
 	count=0;
 	flag=0;
+
 	while(lockptr->tuple_id > 0 && count<MaxDataLockNum)
 	{
 		if(lockptr->table_id==table_id && lockptr->tuple_id==tuple_id && lockptr->node_id==node_id && lockptr->lockmode==mode)

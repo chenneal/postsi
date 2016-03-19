@@ -4,7 +4,6 @@
  *  Created on: Nov 10, 2015
  *      Author: xiaoxin
  */
-
 #include<malloc.h>
 #include<stdlib.h>
 #include"config.h"
@@ -26,14 +25,20 @@ uint32_t ThreadReuseMemStartCompute(void)
 	uint32_t size=0;
 
 	size+=sizeof(PMHEAD);
+
 	size+=sizeof(THREAD);
+
 	size+=sizeof(TransactionData);
+
 	size+=DataMemSize();
+
 	size+=MaxDataLockNum*sizeof(DataLock);
-	// NewReadList
-	size+=sizeof(TransactionId)*(NODENUM*THREADNUM+1);
-	//OldReadList
-	size+=sizeof(TransactionId)*(NODENUM*THREADNUM+1);
+
+	/* NewReadList */
+	size+=sizeof(TransactionId)*(NODENUM*THREADNUM);
+
+	/* OldReadList */
+	size+=sizeof(TransactionId)*(NODENUM*THREADNUM);
 
 	return size;
 }
@@ -47,6 +52,7 @@ void InitMem(void)
 	ThreadReuseMemStart=ThreadReuseMemStartCompute();
 
 	Size size=MEM_TOTAL_SIZE;
+
 	char* start=NULL;
 	MemStart=(char*)malloc(size);
 	if(MemStart==NULL)
@@ -101,7 +107,7 @@ void* MemAlloc(void* memstart,Size size)
 
 	if(!newSpace)
 	{
-		printf("out of memory for process %ld\n", pthread_self());
+		printf("out of memory for process %ld\n",pthread_self());
 		exit(-1);
 	}
 	return newSpace;
@@ -113,8 +119,7 @@ void* MemAlloc(void* memstart,Size size)
 void MemClean(void *memstart)
 {
 	PMHEAD* pmhead=NULL;
-
-	// reset process memory.
+	/* reset process memory. */
 	memset((char*)memstart,0,MEM_PROC_SIZE);
 
 	pmhead=(PMHEAD*)memstart;

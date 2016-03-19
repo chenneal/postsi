@@ -4,7 +4,6 @@
  *  Created on: Nov 10, 2015
  *      Author: xiaoxin
  */
-
 #include<stdio.h>
 #include<unistd.h>
 #include<sys/shm.h>
@@ -29,6 +28,7 @@ int main(int argc, char *argv[])
 
     else if(pid == 0)
     {
+    	/* shmget the shared memory address*/
     	BindShmem();
 
     	InitStorage();
@@ -39,9 +39,14 @@ int main(int argc, char *argv[])
     else
     {
     	InitTransaction();
+
+    	/* load the benchmark data */
     	dataLoading();
+    	/* wait other nodes in the distributed system prepare the data */
     	WaitDataReady();
+    	/* run the benchmark */
     	RunTerminals(THREADNUM);
+
     	printf("transaction process finished.\n");
     }
 	return 0;

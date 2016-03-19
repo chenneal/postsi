@@ -61,7 +61,7 @@ void InitConfig(void)
 
    limPerMin_Terminal=0;
 
-   configWhseCount=10;
+   configWhseCount=2;
    configDistPerWhse=10;
    configCustPerDist=3000;
    MaxBucketSize=1000000;

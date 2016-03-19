@@ -23,7 +23,8 @@ typedef TransactionId TransConf;
 
 extern TransConf* TransConfPtr;
 
-extern TransConf* TransConfTable; //pointer to global conflict transactions table.
+/* pointer to global conflict transactions table. */
+extern TransConf* TransConfTable;
 
 extern int invisible_shmid;
 

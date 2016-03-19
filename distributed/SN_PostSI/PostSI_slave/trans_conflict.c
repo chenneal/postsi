@@ -21,44 +21,51 @@
 #include"sys/socket.h"
 #include"thread_global.h"
 
-TransConf* TransConfTable; //pointer to global conflict transactions table.
+/* pointer to global conflict transactions table. */
+TransConf* TransConfTable;
 
+/* invisible shared memory id */
 int invisible_shmid;
+
 static bool IsPairInvisible(int row, int column, TransactionId* tid);
 static TransConf* InvisibleTableLocate(int row, int column);
 
-Size InvisibleTableSize(void) {
-	Size size;
-	size = MAXPROCS * MAXPROCS * sizeof(TransConf);
-	return size;
+Size InvisibleTableSize(void)
+{
+   Size size;
+   size = MAXPROCS * MAXPROCS * sizeof(TransConf);
+   return size;
 }
 
 void InitInvisibleTable(void)
 {
 	invisible_shmid = shmget(IPC_PRIVATE, InvisibleTableSize(), SHM_MODE);
+
 	if (invisible_shmid == -1)
 	{
 		printf("invisiable shmget error.\n");
 		return;
 	}
+
 	TransConfTable = (TransConf*)shmat(invisible_shmid, 0, 0);
+
 	if (TransConfTable == (TransConf*)-1)
 	{
 		printf("invisiable shmat error.\n");
 		return;
 	}
+
 	memset((char*) TransConfTable, InvalidTransactionId, InvisibleTableSize());
 }
 
 /*
  * (row,column)'s offset in conflict transactions table.
  */
-Size InvisibleTableOffset(int row, int column) {
-	Size offset;
-
-	offset = (row * MAXPROCS + column) * sizeof(TransConf);
-
-	return offset;
+Size InvisibleTableOffset(int row, int column)
+{
+   Size offset;
+   offset = (row * MAXPROCS + column) * sizeof(TransConf);
+   return offset;
 }
 
 /*
@@ -68,37 +75,35 @@ Size InvisibleTableOffset(int row, int column) {
  */
 void InvisibleTableInsert(int row_index, int column_index, TransactionId tid)
 {
-	TransConf* location;
-
-	location = (TransConf*) InvisibleTableLocate(row_index,column_index);
-
-	*location = tid;
+   TransConf* location;
+   location = (TransConf*) InvisibleTableLocate(row_index,column_index);
+   *location = tid;
 }
 
 /*
  * reset the (row,column)'s conflict transaction tuple to invalid tuple.
  */
-void InvisibleTableReset(int row, int column) {
-	TransConf* location;
-
-	location = (TransConf*) InvisibleTableLocate(row,column);
-
-	*location = ConfFalse;
+void InvisibleTableReset(int row, int column)
+{
+   TransConf* location;
+   location = (TransConf*) InvisibleTableLocate(row,column);
+   *location = ConfFalse;
 }
 
 /*
  * return NULL if the conflict transactions tuple is invalid,else
  * return a valid tuple pointer.
  */
-TransConf* InvisibleTableLocate(int row, int column) {
-	assert(row<MAXPROCS && column<MAXPROCS);
-	TransConf* transconf;
-	Size offset;
+TransConf* InvisibleTableLocate(int row, int column)
+{
+   assert(row<MAXPROCS && column<MAXPROCS);
 
-	offset = InvisibleTableOffset(row, column);
-	transconf = (TransConf*) ((char*) TransConfTable + offset);
+   TransConf* transconf;
+   Size offset;
+   offset = InvisibleTableOffset(row, column);
+   transconf = (TransConf*) ((char*) TransConfTable + offset);
 
-	return transconf;
+   return transconf;
 }
 
 /*
@@ -106,9 +111,9 @@ TransConf* InvisibleTableLocate(int row, int column) {
  */
 bool IsPairInvisible(int row, int column, TransactionId* tid)
 {
-	*tid=*(InvisibleTableLocate(row,column));
+   *tid=*(InvisibleTableLocate(row,column));
 
-	return (*tid != InvalidTransactionId) ? true : false;
+   return (*tid != InvalidTransactionId) ? true : false;
 }
 
 /*
@@ -116,51 +121,51 @@ bool IsPairInvisible(int row, int column, TransactionId* tid)
  */
 void ResetPairInvisible(int row, int column)
 {
-	TransConf* ptr;
-	ptr=InvisibleTableLocate(row,column);
-	*ptr=InvalidTransactionId;
+   TransConf* ptr;
+   ptr=InvisibleTableLocate(row,column);
+   *ptr=InvalidTransactionId;
 }
+
 /*
  * make sure the final cid of the transaction.
  */
 CommitId GetTransactionCid(int index,CommitId cid_min)
 {
-	int i;
-	CommitId cid;
-	StartId sid_min;
-	cid=cid_min;
-	int nid;
-	int lindex;
-	int status;
+   int i;
+   CommitId cid;
+   StartId sid_min;
+   cid=cid_min;
+   int nid;
+   int lindex;
+   int status;
 
-	TransactionId rtid;
+   TransactionId rtid;
 
-	lindex = GetLocalIndex(index);
-	for(i=0;i<MAXPROCS;i++)
-	{
-		if(IsPairInvisible(lindex, i, &rtid))
-		{
-			nid = GetNodeId(i);
-			if (Send3(lindex, nid, cmd_getsidmin, i, rtid) == -1)
-			   printf("get sid min send error\n");
-			if (Recv(lindex, nid, 2) == -1)
-			   printf("get sid min recv error\n");
-			sid_min = *(recv_buffer[lindex]);
-			status = *(recv_buffer[lindex]+1);
-
-			if(status)
-			{
-				// transaction by 'rtid' is still in running, else overflow it.
-				cid=(cid<sid_min)?sid_min:cid;
-			}
-			else
-			{
-				// transaction by 'rtid' has finished, reset the invisible-table.
-				ResetPairInvisible(lindex, i);
-			}
-		}
-	}
-	return cid;
+   lindex = GetLocalIndex(index);
+   for(i=0;i<MAXPROCS;i++)
+   {
+      if(IsPairInvisible(lindex, i, &rtid))
+	  {
+	     nid = GetNodeId(i);
+		if (Send3(lindex, nid, cmd_getsidmin, i, rtid) == -1)
+			  printf("get sid min send error\n");
+		if (Recv(lindex, nid, 2) == -1)
+			  printf("get sid min recv error\n");
+		sid_min = *(recv_buffer[lindex]);
+		status = *(recv_buffer[lindex]+1);
+		 if(status)
+		 {
+		    /* transaction by 'rtid' is still in running, else overflow it. */
+			cid=(cid<sid_min)?sid_min:cid;
+		 }
+		 else
+		 {
+		    /* transaction by 'rtid' has finished, reset the invisible-table. */
+		    ResetPairInvisible(lindex, i);
+		 }
+	  }
+   }
+   return cid;
 }
 
 /*
@@ -170,19 +175,19 @@ CommitId GetTransactionCid(int index,CommitId cid_min)
  */
 int IsConflictRollback(int index,CommitId cid)
 {
-	int i;
-	int conflict=0;
-	TransactionId tid;
+   int i;
+   int conflict=0;
+   TransactionId tid;
 
-	for(i=0;i<MAXPROCS;i++)
-	{
-		if(IsPairInvisible(index,i,&tid) && IsPairConflict(i,cid) && index != i)
-		{
-			conflict=1;
-			break;
-		}
-	}
-	return conflict;
+   for(i=0;i<MAXPROCS;i++)
+   {
+      if(IsPairInvisible(index,i,&tid) && IsPairConflict(i,cid) && index != i)
+      {
+	     conflict=1;
+	     break;
+	  }
+   }
+   return conflict;
 }
 
 /*
@@ -191,43 +196,44 @@ int IsConflictRollback(int index,CommitId cid)
  */
 int CommitInvisibleUpdate(int index,StartId sid, CommitId cid)
 {
-	int i;
-    bool is_abort = false;
-    int status;
-	// current transaction by cid has to rollback.
-	int lindex;
-	int nid;
-	TransactionId tid;
+   int i;
+   bool is_abort = false;
+   int status;
 
-	lindex = GetLocalIndex(index);
-	// current transaction can succeed in committing, so update other transaction by invisible transaction pair.
-	for(i=0;i<MAXPROCS;i++)
-	{
-		if(IsPairInvisible(lindex,i,&tid))
-		{
-			nid = GetNodeId(i);
-			if (Send6(lindex, nid, cmd_updatestartid, cid, is_abort, index, i, tid) == -1)
-				printf("update start id send error\n");
-			if (Recv(lindex, nid, 1) == -1)
-				printf("update start id recv error\n");
-			status = *(recv_buffer[lindex]);
-			if (status == 0)
-				is_abort = true;
-		}
+   int lindex;
+   int nid;
+   TransactionId tid;
 
-		if(IsPairInvisible(i,lindex,&tid))
-		{
-			nid = GetNodeId(i);
-            if (Send6(lindex, nid, cmd_updatecommitid, sid, is_abort, index, i, tid) == -1)
-            	printf("update commit id send error\n");
-			if (Recv(lindex, nid, 1) == -1)
-				printf("update commit id recv error\n");
-		}
-	}
-	if(is_abort)
-		return 1;
+   lindex = GetLocalIndex(index);
+   /* current transaction can succeed in committing, so update other transaction by invisible transaction pair. */
+   for(i=0;i<MAXPROCS;i++)
+   {
+      if(IsPairInvisible(lindex,i,&tid))
+	  {
+	     nid = GetNodeId(i);
+	     if (Send6(lindex, nid, cmd_updatestartid, cid, is_abort, index, i, tid) == -1)
+	    	 printf("update start id send error\n");
+	     if (Recv(lindex, nid, 1) == -1)
+	    	 printf("update start id recv error\n");
+	     status = *(recv_buffer[lindex]);
+		 if (status == 0)
+		    is_abort = true;
+	  }
 
-	return 0;
+	  if(IsPairInvisible(i,lindex,&tid))
+	  {
+	     nid = GetNodeId(i);
+	     if (Send6(lindex, nid, cmd_updatecommitid, sid, is_abort, index, i, tid) == -1)
+	    	 printf("update commit id send error\n");
+	     if (Recv(lindex, nid, 1) == -1)
+	    	 printf("update commit id recv error\n");
+	  }
+   }
+
+   if(is_abort)
+      return 1;
+
+   return 0;
 }
 
 /*
@@ -235,18 +241,15 @@ int CommitInvisibleUpdate(int index,StartId sid, CommitId cid)
  */
 void AtEnd_InvisibleTable(int index)
 {
-	int i;
-	int nid;
-	int lindex;
-	TransactionId tid;
+   int i;
+   int lindex;
+   lindex = GetLocalIndex(index);
 
-	lindex = GetLocalIndex(index);
-
-	// just need to clear local invisible-table.
-	for(i=0;i<MAXPROCS;i++)
-	{
-		ResetPairInvisible(lindex,i);
-		ResetPairInvisible(i,lindex);
-	}
+   /* just need to clear local invisible-table. */
+   for(i=0;i<MAXPROCS;i++)
+   {
+      ResetPairInvisible(lindex,i);
+      ResetPairInvisible(i,lindex);
+   }
 }
 

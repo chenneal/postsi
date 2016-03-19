@@ -8,7 +8,7 @@ To run the code, following conditions should be satisfied basically:
 
 In the MPP platform with shared nothing architecture, we choose a machine node to act as the master node, and others as the slave nodes, while the master node here is no more a central coordinator, it is just in use at the starting step of the distributed system. To run the code, we should deploy the source code under the directory `SI_master` in the master node, and the source code under the directory `SI_slave` in the slave nodes. Following are the configure details for the master node and slave nodes.
 
-## Master
+## Configure for Master
 
 ### config.txt
 
@@ -27,7 +27,7 @@ clientport: 4000
 + threadnum: The number of parallel threads in one slave node.
 + clientport: This port is send as a parameter from the master node to slave nodes.
 
-## Slave
+## Configure for Slave
 
 ### config.txt
 

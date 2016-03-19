@@ -1,12 +1,5 @@
 /*
- * data.c
- *
- *  Created on: Jan 15, 2016
- *      Author: Yu
- */
-
-/*
- * This C source file is used for process the data between the client and server across the nodes,
+ * this c source file is used for process the data between the client and server across the nodes,
  * according the command type send from the client and the data type receive from the server.
  */
 #include <pthread.h>
@@ -43,8 +36,9 @@ static void PrimeBucketSize(void);
 static void ReadPrimeTable(void);
 
 static bool IsInsertDone(uint32_t table_id, uint64_t index);
-
 /* some functions used for manage the circular queue. */
+
+
 void InitQueue(Record * r)
 {
    int i;
@@ -82,15 +76,15 @@ bool isEmptyQueue(Record * r)
 
 void EnQueue(Record * r, TransactionId tid, TupleId value)
 {
-   assert(!isFullQueue(r));
-   r->VersionList[r->rear].tid = tid;
-   r->VersionList[r->rear].value= value;
-   r->rear = (r->rear + 1) % VERSIONMAX;
+	assert(!isFullQueue(r));
+	r->VersionList[r->rear].tid = tid;
+	r->VersionList[r->rear].value= value;
+	r->rear = (r->rear + 1) % VERSIONMAX;
 }
 
 void InitBucketNum_Size(void)
 {
-	// bucket num.
+	/* bucket num. */
 	BucketNum[Warehouse_ID]=1;
     BucketNum[Item_ID]=1;
     BucketNum[Stock_ID]=configWhseCount;
@@ -100,7 +94,7 @@ void InitBucketNum_Size(void)
     BucketNum[Order_ID]=configWhseCount*configDistPerWhse;
     BucketNum[NewOrder_ID]=configWhseCount*configDistPerWhse;
     BucketNum[OrderLine_ID]=configWhseCount*configDistPerWhse;
-    // bucket size.
+    /* bucket size. */
 	BucketSize[Warehouse_ID]=configWhseCount;
 	BucketSize[Item_ID]=configUniqueItems;
 	BucketSize[Stock_ID]=configUniqueItems;
@@ -111,7 +105,7 @@ void InitBucketNum_Size(void)
 	BucketSize[NewOrder_ID]=OrderMaxNum;
 	BucketSize[OrderLine_ID]=OrderMaxNum*10;
 
-	// adapt the bucket-size to prime.
+	/* adapt the bucket-size to prime. */
 	ReadPrimeTable();
 	PrimeBucketSize();
 }
@@ -155,7 +149,7 @@ void InitLatchMem(void)
 	}
 }
 
-/* initialize the record hash table and the related lock*/
+/* initialize the record hash table and the related lock */
 void InitRecord(void)
 {
    InitBucketNum_Size();
@@ -168,6 +162,7 @@ void InitRecord(void)
 
    int i;
    uint64_t j;
+
    for (i = 0; i < TABLENUM; i++)
    {
       for (j = 0; j < RecordNum[i]; j++)
@@ -220,7 +215,7 @@ bool MVCCVisibleUpdate(Record * r, VersionId v, StartId sid_max, StartId* sid_mi
       return false;
 }
 
-// to see whether the version is a deleted version.
+/* to see whether the version is a deleted version. */
 bool IsMVCCDeleted(Record * r, VersionId v)
 {
    if(r->VersionList[v].deleted == true)
@@ -229,24 +224,24 @@ bool IsMVCCDeleted(Record * r, VersionId v)
       return false;
 }
 
-// to see whether the transaction can update the data. return true to update, false to abort.
+/* to see whether the transaction can update the data. return true to update, false to abort. */
 bool IsUpdateConflict(Record * r, TransactionId tid, StartId sid_max, StartId* sid_min, CommitId* cid_min)
 {
-	// self already updated the data, note that rear is not the newest version.
+	/* self already updated the data, note that rear is not the newest version. */
 	VersionId newest;
-	// question:the 'newest' points the newest?
+	/* the 'newest' points the newest version */
 	newest = (r->rear + VERSIONMAX -1) % VERSIONMAX;
 	if(r->lcommit != newest)
 	{
 		assert(r->VersionList[newest].tid == tid);
-		// self already  deleted.
+		/* self already  deleted. */
 		if(IsMVCCDeleted(r, newest))
 			return false;
-		// self already updated.
+		/* self already updated. */
 		else
 			return true;
 	}
-	// self first update the data.
+	/* self first update the data. */
 	else
 	{
 		/* update permission only when the lcommit version is visible and is not a deleted version. */
@@ -277,7 +272,7 @@ int LimitHash(int table_id, TupleId r, int k, int min_max)
 		return 0;
 }
 
-// the function RecordFind is used to find a position of a particular tuple id in the HashTable.
+/* the function RecordFind is used to find a position of a particular tuple id in the HashTable. */
 int BasicRecordFind(int tableid, TupleId r)
 {
    int k = 0;
@@ -286,6 +281,7 @@ int BasicRecordFind(int tableid, TupleId r)
 
    assert(TableList != NULL);
    THash HashTable = TableList[tableid];
+   /* HashTable is a pointer to a particular table refer to */
    do
    {
        h = Hash(tableid, r, k);
@@ -308,35 +304,35 @@ int LimitRecordFind(int table_id, TupleId r)
 
    switch(table_id)
    {
-   case Order_ID:
-   case NewOrder_ID:
-   case OrderLine_ID:
-		w_id=(int)((r/ORDER_ID)%WHSE_ID);
-		d_id=(int)((r/(ORDER_ID*WHSE_ID))%DIST_ID);
-		bucket_id=(w_id-1)*10+(d_id-1);
-		break;
-   case Customer_ID:
-   case History_ID:
-	    w_id=(int)((r/CUST_ID)%WHSE_ID);
-	    d_id=(int)((r/(CUST_ID*WHSE_ID))%DIST_ID);
-	    bucket_id=(w_id-1)*10+(d_id-1);
-   		break;
-   case District_ID:
-	    w_id=(int)(r%WHSE_ID);
-	    bucket_id=w_id-1;
-   		break;
-   case Stock_ID:
-   	    w_id=(int)((r/ITEM_ID)%WHSE_ID);
-   	    bucket_id=w_id-1;
-   		break;
-   case Item_ID:
-   	    bucket_id=0;
-   		break;
-   case Warehouse_ID:
-   	    bucket_id=0;
-   		break;
-   default:
-   	    printf("table_ID error %d\n", table_id);
+   	   case Order_ID:
+   	   case NewOrder_ID:
+   	   case OrderLine_ID:
+   		   w_id=(int)((r/ORDER_ID)%WHSE_ID);
+   		   d_id=(int)((r/(ORDER_ID*WHSE_ID))%DIST_ID);
+   		   bucket_id=(w_id-1)*10+(d_id-1);
+   		   break;
+   	   case Customer_ID:
+   	   case History_ID:
+   		   w_id=(int)((r/CUST_ID)%WHSE_ID);
+   		   d_id=(int)((r/(CUST_ID*WHSE_ID))%DIST_ID);
+   		   bucket_id=(w_id-1)*10+(d_id-1);
+   		   break;
+   	   case District_ID:
+   		   w_id=(int)(r%WHSE_ID);
+   		   bucket_id=w_id-1;
+   		   break;
+   	   case Stock_ID:
+   		   w_id=(int)((r/ITEM_ID)%WHSE_ID);
+   		   bucket_id=w_id-1;
+   		   break;
+   	   case Item_ID:
+   		   bucket_id=0;
+   		   break;
+   	   case Warehouse_ID:
+   		   bucket_id=0;
+   		   break;
+   	   default:
+   		   printf("table_ID error %d\n", table_id);
    }
 
    min=bucket_size*bucket_id;
@@ -366,35 +362,35 @@ int RecordFind(int table_id, TupleId r)
 
    switch(table_id)
    {
-   case Order_ID:
-   case NewOrder_ID:
-   case OrderLine_ID:
-		w_id=(int)((r/ORDER_ID)%WHSE_ID);
-		d_id=(int)((r/(ORDER_ID*WHSE_ID))%DIST_ID);
-		bucket_id=(w_id-1)*10+(d_id-1);
-		break;
-   case Customer_ID:
-   case History_ID:
-	    w_id=(int)((r/CUST_ID)%WHSE_ID);
-	    d_id=(int)((r/(CUST_ID*WHSE_ID))%DIST_ID);
-	    bucket_id=(w_id-1)*10+(d_id-1);
-   		break;
-   case District_ID:
-	    w_id=(int)(r%WHSE_ID);
-	    bucket_id=w_id-1;
-   		break;
-   case Stock_ID:
-   	    w_id=(int)((r/ITEM_ID)%WHSE_ID);
-   	    bucket_id=w_id-1;
-   		break;
-   case Item_ID:
-   	    bucket_id=0;
-   		break;
-   case Warehouse_ID:
-   	    bucket_id=0;
-   		break;
-   default:
-   	    printf("table_ID error %d\n", table_id);
+   	   case Order_ID:
+   	   case NewOrder_ID:
+   	   case OrderLine_ID:
+   		   w_id=(int)((r/ORDER_ID)%WHSE_ID);
+   		   d_id=(int)((r/(ORDER_ID*WHSE_ID))%DIST_ID);
+   		   bucket_id=(w_id-1)*10+(d_id-1);
+   		   break;
+   	   case Customer_ID:
+   	   case History_ID:
+   		   w_id=(int)((r/CUST_ID)%WHSE_ID);
+   		   d_id=(int)((r/(CUST_ID*WHSE_ID))%DIST_ID);
+   		   bucket_id=(w_id-1)*10+(d_id-1);
+   		   break;
+   	   case District_ID:
+   		   w_id=(int)(r%WHSE_ID);
+   		   bucket_id=w_id-1;
+   		   break;
+   	   case Stock_ID:
+   		   w_id=(int)((r/ITEM_ID)%WHSE_ID);
+   		   bucket_id=w_id-1;
+   		   break;
+   	   case Item_ID:
+   		   bucket_id=0;
+   		   break;
+   	   case Warehouse_ID:
+   		   bucket_id=0;
+   		   break;
+   	   default:
+   		   printf("table_ID error %d\n", table_id);
    }
 
    min=bucket_size*bucket_id;
@@ -421,53 +417,50 @@ int LimitRecordFindHole(int table_id, TupleId r, int *flag)
     int k = 0;
     int h = 0;
     assert(TableList != NULL);
-    // HashTable is a pointer to a particular table refer to.
-    THash HashTable = TableList[table_id];
+    THash HashTable = TableList[table_id];   //HashTable is a pointer to a particular table refer to.
     switch(table_id)
     {
-    case Order_ID:
-    case NewOrder_ID:
-    case OrderLine_ID:
-		w_id=(int)((r/ORDER_ID)%WHSE_ID);
-		d_id=(int)((r/(ORDER_ID*WHSE_ID))%DIST_ID);
-		bucket_id=(w_id-1)*10+(d_id-1);
-    	break;
-    case Customer_ID:
-    case History_ID:
-    	w_id=(int)((r/CUST_ID)%WHSE_ID);
-    	d_id=(int)((r/(CUST_ID*WHSE_ID))%DIST_ID);
-    	bucket_id=(w_id-1)*10+(d_id-1);
-    	break;
-    case District_ID:
-    	w_id=(int)(r%WHSE_ID);
-    	bucket_id=w_id-1;
-    	break;
-    case Stock_ID:
-    	w_id=(int)((r/ITEM_ID)%WHSE_ID);
-    	bucket_id=w_id-1;
-    	break;
-    case Item_ID:
-    	bucket_id=0;
-    	break;
-    case Warehouse_ID:
-    	bucket_id=0;
-    	break;
-    default:
-    	printf("table_ID error %d\n", table_id);
+    	case Order_ID:
+    	case NewOrder_ID:
+    	case OrderLine_ID:
+    		w_id=(int)((r/ORDER_ID)%WHSE_ID);
+    		d_id=(int)((r/(ORDER_ID*WHSE_ID))%DIST_ID);
+    		bucket_id=(w_id-1)*10+(d_id-1);
+    		break;
+    	case Customer_ID:
+    	case History_ID:
+    		w_id=(int)((r/CUST_ID)%WHSE_ID);
+    		d_id=(int)((r/(CUST_ID*WHSE_ID))%DIST_ID);
+    		bucket_id=(w_id-1)*10+(d_id-1);
+    		break;
+    	case District_ID:
+    		w_id=(int)(r%WHSE_ID);
+    		bucket_id=w_id-1;
+    		break;
+    	case Stock_ID:
+    		w_id=(int)((r/ITEM_ID)%WHSE_ID);
+    		bucket_id=w_id-1;
+    		break;
+    	case Item_ID:
+    		bucket_id=0;
+    		break;
+    	case Warehouse_ID:
+    		bucket_id=0;
+    		break;
+    	default:
+    		printf("table_ID error %d\n", table_id);
     }
 
 	min=bucket_size*bucket_id;
 	max=min+bucket_size;
-	if(w_id==1)
-		printf("table_id:%d, w_id:%ld, d_id:%ld, min:%ld\n",table_id, w_id, d_id, min);
 
     do
     {
 	    h = min+LimitHash(table_id, r, k, bucket_size);
-	    // find a empty record space.
+	    /* find a empty record space. */
 	    if(__sync_bool_compare_and_swap(&HashTable[h].tupleid,InvalidTupleId,r))
 	    {
-		    // to make sure that this place by 'h' is empty.
+		    /* to make sure that this place by 'h' is empty. */
 	    	if(!isEmptyQueue(&HashTable[h]))
 	    	{
 	    		printf("assert(isEmptyQueue(&HashTable[h])):table_id:%d, tuple_id:%ld, h:%d, %ld\n",table_id, r, h, HashTable[h].tupleid);
@@ -476,20 +469,21 @@ int LimitRecordFindHole(int table_id, TupleId r, int *flag)
 		    *flag=0;
 		    return h;
 	    }
-	    // to compare whether the two tuple_id are equal.
+	    /* to compare whether the two tuple_id are equal. */
 	    else if(HashTable[h].tupleid==r)
 	    {
 		    printf("the data by %ld is already exist.\n",r);
 		    *flag=1;
 		    return h;
 	    }
-	    // to search the next record place.
+	    /* to search the next record place. */
 	    else
 		   k++;
     } while (k < bucket_size);
     *flag=-2;
     return -2;
 }
+
 /*
  * the function RecordFind is used to find a position of a particular tuple id in the HashTable for insert.
  *@return:'h' for success, '-2' for already exists, '-1' for not success(already full)
@@ -501,30 +495,30 @@ int BasicRecordFindHole(int tableid, TupleId r, int* flag)
    uint64_t num=RecordNum[tableid];
 
    assert(TableList != NULL);
-   THash HashTable = TableList[tableid];   // HashTable is a pointer to a particular table refer to.
+   THash HashTable = TableList[tableid];   //HashTable is a pointer to a particular table refer to.
    do
    {
        h = Hash(tableid, r, k);
-       //find a empty record space.
+       /* find a empty record space. */
        if(__sync_bool_compare_and_swap(&HashTable[h].tupleid,InvalidTupleId,r))
        {
-    	   // to make sure that this place by 'h' is empty.
+    	   /* to make sure that this place by 'h' is empty. */
     	   assert(isEmptyQueue(&HashTable[h]));
     	   *flag=0;
     	   return h;
        }
-       // to compare whether the two tuple_id are equal.
+       /* to compare whether the two tuple_id are equal. */
        else if(HashTable[h].tupleid==r)
        {
   		   printf("the data by %ld is already exist.\n",r);
   		   *flag=1;
   		   return h;
        }
-       // to search the next record place.
+       //to search the next record place.
        else
     	   k++;
    } while (k < num);
-   printf("can not find a space for insert record %ld %d!\n", r, num);
+   printf("can not find a space for insert record %ld %ld!\n", r, num);
    *flag=-2;
    return -2;
 }
@@ -535,44 +529,42 @@ int RecordFindHole(int table_id, TupleId r, int *flag)
 	int bucket_size=BucketSize[table_id];
     int k = 0;
     int h = 0;
-    TransactionData *tdata;
-    TransactionId tid;
 
     bool success;
 
     assert(TableList != NULL);
-    THash HashTable = TableList[table_id];   // HashTable is a pointer to a particular table refer to.
+    THash HashTable = TableList[table_id];   //HashTable is a pointer to a particular table refer to.
     switch(table_id)
     {
-    case Order_ID:
-    case NewOrder_ID:
-    case OrderLine_ID:
-		w_id=(int)((r/ORDER_ID)%WHSE_ID);
-		d_id=(int)((r/(ORDER_ID*WHSE_ID))%DIST_ID);
-		bucket_id=(w_id-1)*10+(d_id-1);
-    	break;
-    case Customer_ID:
-    case History_ID:
-    	w_id=(int)((r/CUST_ID)%WHSE_ID);
-    	d_id=(int)((r/(CUST_ID*WHSE_ID))%DIST_ID);
-    	bucket_id=(w_id-1)*10+(d_id-1);
-    	break;
-    case District_ID:
-    	w_id=(int)(r%WHSE_ID);
-    	bucket_id=w_id-1;
-    	break;
-    case Stock_ID:
-    	w_id=(int)((r/ITEM_ID)%WHSE_ID);
-    	bucket_id=w_id-1;
-    	break;
-    case Item_ID:
-    	bucket_id=0;
-    	break;
-    case Warehouse_ID:
-    	bucket_id=0;
-    	break;
-    default:
-    	printf("table_ID error %d\n", table_id);
+    	case Order_ID:
+    	case NewOrder_ID:
+    	case OrderLine_ID:
+    		w_id=(int)((r/ORDER_ID)%WHSE_ID);
+    		d_id=(int)((r/(ORDER_ID*WHSE_ID))%DIST_ID);
+    		bucket_id=(w_id-1)*10+(d_id-1);
+    		break;
+    	case Customer_ID:
+    	case History_ID:
+    		w_id=(int)((r/CUST_ID)%WHSE_ID);
+    		d_id=(int)((r/(CUST_ID*WHSE_ID))%DIST_ID);
+    		bucket_id=(w_id-1)*10+(d_id-1);
+    		break;
+    	case District_ID:
+    		w_id=(int)(r%WHSE_ID);
+    		bucket_id=w_id-1;
+    		break;
+    	case Stock_ID:
+    		w_id=(int)((r/ITEM_ID)%WHSE_ID);
+    		bucket_id=w_id-1;
+    		break;
+    	case Item_ID:
+    		bucket_id=0;
+    		break;
+    	case Warehouse_ID:
+    		bucket_id=0;
+    		break;
+    	default:
+    		printf("table_ID error %d\n", table_id);
     }
 
 	min=bucket_size*bucket_id;
@@ -589,8 +581,7 @@ int RecordFindHole(int table_id, TupleId r, int *flag)
 
 	    	if(!isEmptyQueue(&HashTable[h]))
 	    	{
-	    		printf("find:assert(isEmptyQueue(&HashTable[h])):tid:%d, table_id:%d, tuple_id:%ld, h:%d, %ld, %d, %d, %d\n",tdata->tid, table_id, r, h, HashTable[h].tupleid, HashTable[h].front, HashTable[h].lcommit, HashTable[h].rear);
-	    		PrintTable(table_id);
+	    		printf("find:assert(isEmptyQueue(&HashTable[h]))");
 	    		exit(-1);
 	    	}
 	    	if(r == InvalidTupleId)
@@ -609,20 +600,21 @@ int RecordFindHole(int table_id, TupleId r, int *flag)
 	    	pthread_spin_unlock(&RecordLatch[table_id][h]);
 	    	success=false;
 	    }
-	    // find a empty record space.
+
+	    /* find a empty record space. */
 	    if(success == true)
 	    {
-		    //to make sure that this place by 'h' is empty.
+		    /* to make sure that this place by 'h' is empty. */
 		    *flag=0;
 		    return h;
 	    }
-	    // to compare whether the two tuple_id are equal.
+	    /* to compare whether the two tuple_id are equal. */
 	    else if(HashTable[h].tupleid==r)
 	    {
 		    *flag=1;
 		    return h;
 	    }
-	    // to search the next record place.
+	    /* to search the next record place. */
 	    else
 		   k++;
     } while (k < bucket_size);
@@ -636,22 +628,18 @@ void ProcessInsert(uint64_t * recv_buffer, int conn, int sindex)
 	int status = 1;
 	int flag;
 	int table_id;
-	int index;
-	TransactionId tid;
 	uint64_t tuple_id;
 
 	table_id = (uint32_t) recv_buffer[1];
     tuple_id = (TupleId)recv_buffer[2];
-    tid = (TransactionId)recv_buffer[3];
-    index = (int) recv_buffer[4];
 
 	h=RecordFindHole(table_id, tuple_id, &flag);
 
 	if(flag==-2)
 	{
-		// no space for new tuple to insert.
+		/* no space for new tuple to insert. */
 		printf("Data_insert: flag==-1.\n");
-		printf("no space for table_id:%d, tuple_id:%d\n",table_id, tuple_id);
+		printf("no space for table_id:%d, tuple_id:%ld\n",table_id, tuple_id);
 		status = 0;
 		exit(-1);
 	}
@@ -659,7 +647,6 @@ void ProcessInsert(uint64_t * recv_buffer, int conn, int sindex)
 	{
 		status = 0;
 	}
-
 	if((SSend2(conn, sindex, status, h)) == -1)
 		printf("process insert send error!\n");
 }
@@ -682,7 +669,7 @@ void ProcessTrulyInsert(uint64_t * recv_buffer, int conn, int sindex)
 
 	if(IsInsertDone(table_id, index))
 	{
-		// other transaction has inserted the tuple.
+		/* other transaction has inserted the tuple. */
 		pthread_rwlock_unlock(&(RecordLock[table_id][index]));
 		status = 4;
 		if((SSend1(conn, sindex, status)) == -1)
@@ -690,16 +677,15 @@ void ProcessTrulyInsert(uint64_t * recv_buffer, int conn, int sindex)
 	}
 	else
 	{
-		WriteListInsert(table_id, index, tid);
+	   WriteListInsert(table_id, index, tid);
+	   THash HashTable=TableList[table_id];
 
-		THash HashTable=TableList[table_id];
-
-		pthread_spin_lock(&RecordLatch[table_id][index]);
-		HashTable[index].tupleid=tuple_id;
-		EnQueue(&HashTable[index],tid, value);
-		pthread_spin_unlock(&RecordLatch[table_id][index]);
-		if((SSend1(conn, sindex, status)) == -1)
-			printf("process truly insert send error!\n");
+	   pthread_spin_lock(&RecordLatch[table_id][index]);
+	   HashTable[index].tupleid=tuple_id;
+	   EnQueue(&HashTable[index],tid, value);
+	   pthread_spin_unlock(&RecordLatch[table_id][index]);
+	   if((SSend1(conn, sindex, status)) == -1)
+		   printf("process truly insert send error!\n");
 	}
 }
 
@@ -751,12 +737,13 @@ void ProcessReadFind(uint64_t * recv_buffer, int conn, int sindex)
     tuple_id = recv_buffer[2];
     tid = (TransactionId)recv_buffer[3];
     index = (int)recv_buffer[4];
+
 	h = RecordFind(table_id, tuple_id);
 
-	// not found.
+	/* not found. */
 	if(h < 0)
 	{
-		// to roll back.
+		/* to roll back. */
 		status = 0;
 		wtid = InvalidTransactionId;
 		windex=0;
@@ -765,7 +752,7 @@ void ProcessReadFind(uint64_t * recv_buffer, int conn, int sindex)
 	}
 	else
 	{
-	   // the data by 'tuple_id' exist, so to read it, we should add to the read list before reading.
+	   /* the data by 'tuple_id' exist, so to read it. we should add to the read list before reading. */
 	   ReadListInsert(table_id, h, tid, index);
 	   wtid = WriteListRead(table_id, h);
 	   windex=(wtid-1)/MaxTransId;
@@ -820,6 +807,7 @@ void ProcessCollisionInsert(uint64_t * recv_buffer, int conn, int sindex)
 	{
 		status=0;
 	}
+
     if(SSend3(conn, sindex, status, sid, cid) == -1)
     	printf("process collision insert send error\n");
 }
@@ -836,7 +824,7 @@ void ProcessReadVersion(uint64_t * recv_buffer, int conn, int sindex)
 
 	uint64_t status=0;
 	uint64_t value=0;
-	CommitId cid;
+
     table_id = (int)recv_buffer[1];
     h = (int)recv_buffer[2];
     sid_min=(StartId)recv_buffer[3];
@@ -845,7 +833,7 @@ void ProcessReadVersion(uint64_t * recv_buffer, int conn, int sindex)
 
 	THash HashTable = TableList[table_id];
 	pthread_spin_lock(&RecordLatch[table_id][h]);
-
+	/* by here, we try to read already committed tuple. */
 	if(HashTable[h].lcommit >= 0)
 	{
 		for (i = HashTable[h].lcommit; i != (HashTable[h].front + VERSIONMAX - 1) % VERSIONMAX; i = (i +VERSIONMAX-1) % VERSIONMAX)
@@ -886,7 +874,6 @@ void ProcessUpdateFind(uint64_t * recv_buffer, int conn, int sindex)
    int index;
 
    TransactionId wr_tid;
-   int wr_index;
 
    tableid = recv_buffer[1];
    tupleid = recv_buffer[2];
@@ -894,47 +881,26 @@ void ProcessUpdateFind(uint64_t * recv_buffer, int conn, int sindex)
    index = (int)recv_buffer[4];
 
    h = RecordFind(tableid, tupleid);
-   // not found.
+   /* not found. */
    if (h < 0)
    {
-	  // abort transaction outside the function.
+	  wr_tid = 0;
+	  /* abort transaction outside the function. */
 	  status = 0;
-	  if (SSend2(conn, sindex, status, h) == -1)
+	  if (SSend3(conn, sindex, status, h, wr_tid) == -1)
 		  printf("process update find send error\n");
    }
-   // found, so light-read it once.
+
    else
    {
-	    status=1;
+      status=1;
 
-		// we should add to the read list before reading.
-		ReadListInsert(tableid, h, tid, index);
-
-		wr_tid=WriteTransTable[tableid][h];
-
-		if (SSend3(conn, sindex, status, h, wr_tid) == -1)
-			printf("process update find send error\n");
+	  /* we should add to the read list before reading. */
+	  ReadListInsert(tableid, h, tid, index);
+	  wr_tid=WriteTransTable[tableid][h];
+	  if (SSend3(conn, sindex, status, h, wr_tid) == -1)
+		  printf("process update find send error\n");
    }
-}
-
-void ProcessUpdateWirteList(uint64_t * recv_buffer, int conn, int sindex)
-{
-   int i;
-   int tableid;
-   uint64_t h;
-   int index;
-   TransactionId tid;
-   tableid = recv_buffer[1];
-   h = recv_buffer[2];
-   tid = recv_buffer[3];
-   index = recv_buffer[4];
-   WriteListInsert(tableid, h, tid);
-
-   for (i = 0; i < READLISTMAX; i++)
-	   *(ssend_buffer[sindex]+i) = ReadTransTable[tableid][h][i];
-
-   if (send(conn, ssend_buffer[sindex], READLISTMAX*sizeof(uint64_t), 0) == -1)
-	   printf("process update write list insert send error\n");
 }
 
 void ProcessUpdateConflict(uint64_t * recv_buffer, int conn, int sindex)
@@ -947,8 +913,6 @@ void ProcessUpdateConflict(uint64_t * recv_buffer, int conn, int sindex)
    StartId sid_max;
    StartId sid_min;
    CommitId cid_min;
-
-   CommitId cid = 0;
 
    tableid = recv_buffer[1];
    h = recv_buffer[2];
@@ -963,25 +927,24 @@ void ProcessUpdateConflict(uint64_t * recv_buffer, int conn, int sindex)
    int status = 1;
    if (firstadd)
    {
-		// the first time to hold the wr-lock on data (table_id,tuple_id).
-		pthread_rwlock_wrlock(&(RecordLock[tableid][h]));
+	   /* the first time to hold the wr-lock on data (table_id,tuple_id). */
+	   pthread_rwlock_wrlock(&(RecordLock[tableid][h]));
    }
 
-	// current transaction can't update the data.
+	/* current transaction can't update the data. */
 	if(!IsUpdateConflict(&HashTable[h], tid, sid_max, &sid_min, &cid_min))
 	{
-		// release the write-lock and return to rollback.
+		/* release the write-lock and return to rollback. */
 		if(firstadd)
 			pthread_rwlock_unlock(&(RecordLock[tableid][h]));
 		status = 4;
-
 	    if (SSend3(conn, sindex, status, sid_min, cid_min) == -1)
 	    	printf("process update conflict send error\n");
 	    return;
 	}
 
 	/*
-	 * xxzhou: write-list-insert and merge-read-list.
+	 * write-list-insert and merge-read-list.
 	 */
 	WriteListInsert(tableid, h, tid);
 
@@ -1055,7 +1018,7 @@ void ProcessUpdateVersion(uint64_t * recv_buffer, int conn, int sindex)
 	   }
 	   pthread_spin_unlock(&RecordLatch[tableid][h]);
 	   if (SSend1(conn, sindex, status) == -1)
-		  printf("Process update version send error\n");
+		   printf("Process update version send error\n");
    }
 }
 
@@ -1064,17 +1027,21 @@ void ProcessAbortInsert(uint64_t * recv_buffer, int conn, int sindex)
    int tableid;
    uint64_t h;
    int status = 0;
+
    tableid = recv_buffer[1];
    h = recv_buffer[2];
+
    VersionId newest;
    THash HashTable=TableList[tableid];
    Record *r = &HashTable[h];
+
    pthread_spin_lock(&RecordLatch[tableid][h]);
    newest = (r->rear + VERSIONMAX -1) % VERSIONMAX;
    r->tupleid=InvalidTupleId;
    r->rear=0;
    r->VersionList[newest].tid = InvalidTransactionId;
    pthread_spin_unlock(&RecordLatch[tableid][h]);
+
    if (SSend1(conn, sindex, status) == -1)
       printf("abort insert send error\n");
 }
@@ -1090,14 +1057,11 @@ void ProcessGetSidMin(uint64_t * recv_buffer, int conn, int sindex)
 
    index = recv_buffer[1];
    tid = (TransactionId)recv_buffer[2];
-
    lindex=GetLocalIndex(index);
-
    proc=(PROC*)(procbase+lindex);
-
    sid_min=GetTransactionSidMin(lindex);
 
-   // transaction by 'tid' has finished, and another transaction is running.
+   /* transaction by 'tid' has finished, and another transaction is running. */
    if(proc->tid != tid)
 	   status=0;
 
@@ -1127,6 +1091,7 @@ void ProcessUpdateStartId(uint64_t * recv_buffer, int conn, int sindex)
 
    if (!is_abort && (proc->tid == tid))
        status = UpdateProcStartId(lindex, cid);
+
    ResetPairInvisible(self_index,lindex);
    if (SSend1(conn, sindex, status) == -1)
 	   printf("process update start id send error\n");
@@ -1155,6 +1120,7 @@ void ProcessUpdateCommitId(uint64_t * recv_buffer, int conn, int sindex)
 
 	if (!is_abort && (proc->tid == tid))
 	   UpdateProcCommitId(lindex, sid);
+
 	ResetPairInvisible(lindex,self_index);
 	if (SSend1(conn, sindex, status) == -1)
 	   printf("process update commit id send error\n");
@@ -1171,10 +1137,12 @@ void ProcessCommitUpdate(uint64_t * recv_buffer, int conn, int sindex)
    cid = recv_buffer[3];
    THash HashTable=TableList[tableid];
    Record *r = &HashTable[h];
+
    pthread_spin_lock(&RecordLatch[tableid][h]);
    r->lcommit = (r->lcommit + 1) % VERSIONMAX;
    r->VersionList[r->lcommit].cid = cid;
    pthread_spin_unlock(&RecordLatch[tableid][h]);
+
    if (SSend1(conn, sindex, status) == -1)
 	   printf("commit update send error\n");
 }
@@ -1190,9 +1158,9 @@ void ProcessAbortUpdate(uint64_t * recv_buffer, int conn, int sindex)
    isdelete = recv_buffer[3];
 
    VersionId newest;
-
    THash HashTable=TableList[tableid];
    Record *r = &HashTable[h];
+
    if (isdelete)
    {
       pthread_spin_lock(&RecordLatch[tableid][h]);
@@ -1204,6 +1172,7 @@ void ProcessAbortUpdate(uint64_t * recv_buffer, int conn, int sindex)
       if (SSend1(conn, sindex, status) == -1)
    	     printf("abort update send error\n");
    }
+
    else
    {
 	  pthread_spin_lock(&RecordLatch[tableid][h]);
@@ -1211,8 +1180,8 @@ void ProcessAbortUpdate(uint64_t * recv_buffer, int conn, int sindex)
 	  r->VersionList[newest].tid = InvalidTransactionId;
 	  r->rear = newest;
 	  pthread_spin_unlock(&RecordLatch[tableid][h]);
-	  if (SSend1(conn, sindex, status) == -1)
-		  printf("abort update send error\n");
+      if (SSend1(conn, sindex, status) == -1)
+   	     printf("abort update send error\n");
    }
 }
 
@@ -1237,10 +1206,8 @@ bool IsInsertDone(uint32_t table_id, uint64_t index)
 	bool done;
 
 	pthread_spin_lock(&RecordLatch[table_id][index]);
-
 	if(HashTable[index].lcommit >= 0)done=true;
 	else done=false;
-
 	pthread_spin_unlock(&RecordLatch[table_id][index]);
 
 	return done;
@@ -1259,7 +1226,6 @@ void validation(int table_id)
 		if(HashTable[i].tupleid == InvalidTupleId)
 			count++;
 	}
-	printf("table: %d of %ld rows are available.\n",count, RecordNum[table_id]);
 }
 
 void PrimeBucketSize(void)

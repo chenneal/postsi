@@ -50,30 +50,27 @@ void EndReport(TransState* StateInfo, int terminals);
 
 void GetReady(void)
 {
-   // get the parameters from the configure file.
+   /* get the parameters from the configure file. */
    InitNetworkParam();
 
    InitConfig();
 
-   // connect the parameter server from the master node.
+   /* connect the parameter server from the master node. */
    InitParamClient();
 
-   // get the parameters from the master node.
+   /* get the parameters from the master node. */
    GetParam();
 
    /* connect the message server from the master node,
 	* the message server is used for inform the slave nodes
-	* that every nodes have loaded the data.
-    */
+	* that every nodes have loaded the data. */
    InitMessageClient();
 
-   // the semaphore is used to synchronize the storage process and the transaction process.
+   /* the semaphore is used to synchronize the storage process and the transaction process. */
    InitSemaphore();
 
    InitProc();
-   /*
-    * if the process-array is shared between storage and transaction, so is the process-array-lock.
-    */
+   /* if the process-array is shared between storage and transaction, so is the process-array-lock. */
    InitProcLock();
    InitInvisibleTable();
 }
@@ -101,14 +98,12 @@ void BindShmem(void)
 void InitTransaction(void)
 {
 	SleepTime=1;
-
 	SetRandomSeed();
-
-	// initialize the memory space to be used.
 	InitMem();
+
 	InitTransactionIdAssign();
 	InitClientBuffer();
-	// initialize pthread_key_t array for thread global variables.
+	/* initialize pthread_key_t array for thread global variables. */
 	InitThreadGlobalKey();
 }
 
@@ -120,38 +115,11 @@ void InitStorage(void)
 	InitServer();
 }
 
-void ThreadRun(int nthreads)
-{
-	int i,err;
-
-	int a[10] = {1,2,3,4,5,6,7,8,9, 10};
-	pthread_t tid[nthreads];
-
-	/*
-	 * run threads here.
-	 */
-	for(i=0;i<nthreads;i++)
-	{
-		err=pthread_create(&tid[i],NULL,ProcStart,(void*)(&a[i]));
-		if(err!=0)
-		{
-			printf("can't create thread:%s\n",strerror(err));
-			return;
-		}
-	}
-
-	for(i=0;i<nthreads;i++)
-	{
-		pthread_join(tid[i],NULL);
-	}
-
-	return;
-}
-
 void RunTerminals(int numTerminals)
 {
 	int i, j;
 	int terminalWarehouseID, terminalDistrictID;
+
 	int usedTerminal[configWhseCount][10];
 	pthread_t tid[numTerminals];
 	pthread_barrier_t barrier;
@@ -179,7 +147,7 @@ void RunTerminals(int numTerminals)
 		do
 		{
 			terminalWarehouseID=(int)GlobalRandomNumber(1, configWhseCount);
-			//terminalWarehouseID=i+1;
+
 			terminalDistrictID=(int)GlobalRandomNumber(1, 10);
 			cycle++;
 		}while(usedTerminal[terminalWarehouseID-1][terminalDistrictID-1]);
@@ -225,7 +193,7 @@ void runTerminal(int terminalWarehouseID, int terminalDistrictID, pthread_t *tid
 
 }
 
-// this semaphore is used by transaction process waiting for the storage process initialize the server.
+/* this semaphore is used by transaction process waiting for the storage process initialize the server. */
 void InitSemaphore(void)
 {
 	wait_server = sem_open("/wait_server", O_RDWR|O_CREAT, 00777, 0);
@@ -283,7 +251,7 @@ void EndReport(TransState* StateInfo, int terminals)
 	printf("session start at : %ld \n",sessionStartTimestamp);
 	printf("session end at : %ld %ld\n",sessionEndTimestamp, sessionEndTimestamp-sessionStartTimestamp);
 	printf("total rumtime is %d min, %d s\n", min, sec);
-	printf("transactionCount:%ld, transactionCommit:%ld, transactionAbort:%ld, %ld %ld, %d %d %d\n",transactionCount, transactionCommit, transactionAbort, fastNewOrderCounter, transactionCount, runabort, endabort, otherabort);
+	printf("transactionCount:%d, transactionCommit:%d, transactionAbort:%d, %d %d, %d %d %d\n",transactionCount, transactionCommit, transactionAbort, fastNewOrderCounter, transactionCount, runabort, endabort, otherabort);
 	for(i=0;i<terminals;i++)
 	{
 		printf("newOrder:%d %d, payment:%d %d, delivery:%d, orderStatus:%d, stockLevel:%d %d\n",StateInfo[i].NewOrder, StateInfo[i].NewOrder_C, StateInfo[i].Payment, StateInfo[i].Payment_C, StateInfo[i].Delivery, StateInfo[i].Order_status, StateInfo[i].Stock_level, StateInfo[i].Stock_level_C);

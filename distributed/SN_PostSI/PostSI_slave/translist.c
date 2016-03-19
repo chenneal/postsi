@@ -34,7 +34,7 @@ void InitReadListMemAlloc(void)
 	threadinfo=(THREAD*)pthread_getspecific(ThreadInfoKey);
 	memstart=threadinfo->memstart;
 
-	size=sizeof(TransactionId)*(NODENUM*THREADNUM+1);
+	size=sizeof(TransactionId)*(THREADNUM*NODENUM+1);
 
 	ReadList=(TransactionId*)MemAlloc((void*)memstart, size);
 
@@ -63,10 +63,7 @@ void InitReadListMemAlloc(void)
 void InitReadListMem(void)
 {
 	TransactionId* ReadList=NULL;
-	TransactionId* OldReadList=NULL;
-
 	Size size;
-
 	size=sizeof(TransactionId)*(NODENUM*THREADNUM+1);
 
 	ReadList=(TransactionId*)pthread_getspecific(NewReadListKey);
@@ -86,8 +83,6 @@ void InitTransactionList(void)
     	  WriteTransTable[i][j]=InvalidTransactionId;
       }
    }
-
-
 
    for (i = 0; i < TABLENUM; i++)
    {
@@ -110,7 +105,8 @@ void ReadListInsert(int tableid, int h, TransactionId tid, int index)
 }
 
 /* test is use to test if position have a read transaction, note that the read list lock should be get in the outer loop */
-/* the function is not used in the distributed system instead by the copy mechanism */
+/* the function is not used in the distributed system instead by the copy mechanism*/
+
 TransactionId ReadListRead(int tableid, int h, int test)
 {
 	return ReadTransTable[tableid][test][h];
@@ -121,7 +117,7 @@ TransactionId ReadListRead(int tableid, int h, int test)
  */
 void ReadListDelete(int tableid, int h, int index)
 {
-   ReadTransTable[tableid][index][h] = InvalidTransactionId;
+	ReadTransTable[tableid][index][h] = InvalidTransactionId;
 }
 
 /*
@@ -129,7 +125,7 @@ void ReadListDelete(int tableid, int h, int index)
  */
 void WriteListInsert(int tableid, int h, TransactionId tid)
 {
-   WriteTransTable[tableid][h]=tid;
+	WriteTransTable[tableid][h]=tid;
 }
 
 TransactionId WriteListRead(int tableid, int h)
@@ -187,7 +183,7 @@ void MergeReadList(uint64_t* buffer)
 
 	OldReadList=(TransactionId*)pthread_getspecific(OldReadListKey);
 
-	for(i=0;i<NODENUM*THREADNUM;i++)
+	for(i=0;i<=NODENUM*THREADNUM;i++)
 	{
 		rdtid = (TransactionId)buffer[i];
 

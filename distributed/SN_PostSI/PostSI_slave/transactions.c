@@ -4,7 +4,6 @@
  *  Created on: Dec 16, 2015
  *      Author: xiaoxin
  */
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/time.h>
@@ -88,14 +87,13 @@ int LoadWhse(int numWarehouses)
 		w_id=i;
 		tuple_id=(TupleId)w_id;
 		value=0;
-
 		result=Data_Insert(table_id, tuple_id, value, node_id);
 		if(result==0)
 		{
 			printf("LoadWhse failed for %d.\n",i);
 			exit(-1);
 		}
-
+		//printf("after insert.\n");
 		k++;
 		if(k%configCommitCount==0)
 		{
@@ -106,6 +104,7 @@ int LoadWhse(int numWarehouses)
 			}
 			else
 			{
+				/* current transaction has to rollback. */
 				AbortTransaction(index);
 			}
 			StartTransaction();
@@ -149,7 +148,7 @@ int LoadItem(int ItemCount)
 	{
 		i_id=i;
 		tuple_id=(TupleId)i_id;
-		//random price.
+		/* random price. */
 		price=(int)RandomNumber(1, 100);
 		value=(TupleId)price;
 		result=Data_Insert(table_id, tuple_id, value, node_id);
@@ -183,7 +182,6 @@ int LoadItem(int ItemCount)
 	{
 		AbortTransaction(index);
 	}
-
 	return k;
 }
 
@@ -275,7 +273,6 @@ int LoadDist(int numWarehouses, int DistPerWhse)
 		{
 			d_w_id=w;
 			d_id=d;
-			//d_next_o_id=3001;
 			d_next_o_id=configCustPerDist+1;
 
 			tuple_id=(TupleId)(d_w_id+(TupleId)d_id*WHSE_ID);
@@ -347,15 +344,16 @@ int LoadCust(int numWarehouses, int DistPerWhse, int CustPerDist)
 				c_w_id=w;
 
 				cust_id=(TupleId)(c_id+c_w_id*CUST_ID+(TupleId)c_d_id*CUST_ID*WHSE_ID);
-				// to compute.
-				// discount from 1 to 5.
+				/* to compute. */
+				/* discount from 1 to 5. */
 				c_discount=RandomNumber(1,5);
-
-				if(RandomNumber(1,100) <= 90)// 90% good credit.
+				/* 90% good credit. */
+				if(RandomNumber(1,100) <= 90)
 				{
 					c_credit=1;
 				}
-				else//10% bad credit.
+				/* 10% bad credit. */
+				else
 				{
 					c_credit=0;
 				}
@@ -463,7 +461,7 @@ int LoadOrder(int numWarehouses, int DistPerWhse, int CustPerDist)
 				}
 
 				k++;
-				//add to avoid too many rows in one transaction.
+				/* add to avoid too many rows in one transaction. */
 				if(k%configCommitCount==0)
 				{
 					result=PreCommit(&index);
@@ -482,7 +480,6 @@ int LoadOrder(int numWarehouses, int DistPerWhse, int CustPerDist)
 				// 900 rows in the ORDER table for that district (i.e., with
 				// NO_O_ID between 2,101 and 3,000)
 				if(c > 2100)
-				//if(c > 210)
 				{
 					no_w_id=w;
 					no_d_id=d;
@@ -499,7 +496,7 @@ int LoadOrder(int numWarehouses, int DistPerWhse, int CustPerDist)
 					}
 					Neworder_Count++;
 					k++;
-					//add to avoid too many rows in one transaction.
+					/* add to avoid too many rows in one transaction. */
 					if(k%configCommitCount==0)
 					{
 						result=PreCommit(&index);
@@ -541,7 +538,6 @@ int LoadOrder(int numWarehouses, int DistPerWhse, int CustPerDist)
 					if(result==0)
 					{
 						printf("LoadorderLinefailed for ol_o_id:%d, ol_w_id:%d, ol_d_id:%d, ol_number:%d.\n",ol_o_id, ol_w_id, ol_d_id, ol_number);
-						//break;
 						exit(-1);
 					}
 
@@ -603,9 +599,11 @@ void executeTransactions(int numTransactions, int terminalWarehouseID, int termi
 	StateInfo->Payment_C=0;
 	StateInfo->Stock_level_C=0;
 
+
 	for(i=0;i<numTransactions;i++)
 	{
 		transactionWeight=(int)RandomNumber(1, 100);
+
 		newOrder=0;
 
 		if(transactionWeight <= paymentWeightValue)
@@ -613,18 +611,18 @@ void executeTransactions(int numTransactions, int terminalWarehouseID, int termi
 			count[0]++;
 			result=executeTransaction(PAYMENT, terminalWarehouseID, terminalDistrictID);
 			StateInfo->Payment++;
+
 			if(result==0)
-			    StateInfo->Payment_C++;
+				StateInfo->Payment_C++;
 		}
 		else if(transactionWeight <= paymentWeightValue + stockLevelWeightValue)
 		{
 			count[1]++;
 			result=executeTransaction(STOCK_LEVEL, terminalWarehouseID, terminalDistrictID);
 			StateInfo->Stock_level++;
+
 			if(result==0)
-		            StateInfo->Stock_level_C++;
-			
-			
+				StateInfo->Stock_level_C++;
 		}
 		else if(transactionWeight <= paymentWeightValue + stockLevelWeightValue + orderStatusWeightValue)
 		{
@@ -645,15 +643,28 @@ void executeTransactions(int numTransactions, int terminalWarehouseID, int termi
 			newOrderCount++;
 			newOrder=1;
 			StateInfo->NewOrder++;
+
 			if(result==0)
 				StateInfo->NewOrder_C++;
 		}
-		
-		if(result == 0)
+
+		switch(result)
+		{
+		case 0:
 			StateInfo->trans_commit++;
-		else
+			break;
+		case -1:
+			StateInfo->runabort++;
 			StateInfo->trans_abort++;
-		
+			break;
+		case -2:
+			StateInfo->endabort++;
+			StateInfo->trans_abort++;
+			break;
+		default:
+			StateInfo->otherabort++;
+			StateInfo->trans_abort++;
+		}
 	}
 }
 
@@ -664,7 +675,6 @@ int executeTransaction(TransactionsType type, int terminalWarehouseID, int termi
 {
 	int i;
 	int result;
-	// NEW_ORDER
 	int districtID, customerID, numItems;
 	int allLocal;
 	int itemIDs[15], supplierWarehouseIDs[15], orderQuantities[15];
@@ -694,15 +704,12 @@ int executeTransaction(TransactionsType type, int terminalWarehouseID, int termi
 		node_id[i]=(nodeid+i)%nodenum;
 	}
 
-	//PAYMENT
 	int customerDistrictID, customerWarehouseID;
 	int v;
 	int paymentAmount;
 
-	//STOCK_LEVEL
 	int threshold;
 
-	//DELIVERY
 	int orderCarrierID;
 
 	switch(type)
@@ -733,7 +740,7 @@ int executeTransaction(TransactionsType type, int terminalWarehouseID, int termi
 			orderQuantities[i]=RandomNumber(1, 10);
 		}
 
-	    // we need to cause 1% of the new orders to be rolled back.
+	    /* we need to cause 1% of the new orders to be rolled back. */
 		if(RandomNumber(1, 100) == 1)
 		{
 			itemIDs[numItems-1]=-1;
@@ -759,7 +766,7 @@ int executeTransaction(TransactionsType type, int terminalWarehouseID, int termi
 			}while(customerWarehouseID == terminalWarehouseID && configWhseCount > 1);
 		}
 
-		//100% lookup by customerID.
+		/* 100% lookup by customerID. */
 		customerID=getCustomerID();
 
 		paymentAmount=RandomNumber(1, 5000);
@@ -773,7 +780,6 @@ int executeTransaction(TransactionsType type, int terminalWarehouseID, int termi
 		break;
 	case ORDER_STATUS:
 		districtID=RandomNumber(1, 10);
-		//districtID=1;
 		customerID=getCustomerID();
 
 		result=orderStatusTransaction(terminalWarehouseID, districtID, customerID, node_id, node_num);
@@ -788,6 +794,7 @@ int executeTransaction(TransactionsType type, int terminalWarehouseID, int termi
 	}
 	return result;
 }
+
 /*
  * new order transaction.
  */
@@ -842,55 +849,49 @@ int newOrderTransaction(int w_id, int d_id, int c_id, int o_ol_cnt, int o_all_lo
 
 	tdata=(TransactionData*)pthread_getspecific(TransactionDataKey);
 
-	//stmtGetCustWhse
 	whse_id=(TupleId)w_id;
 	cust_id=(TupleId)(c_id+w_id*CUST_ID+(TupleId)d_id*CUST_ID*WHSE_ID);
 
-	whse_value=Data_Read(Warehouse_ID, whse_id, node_id2, &flag);
+	whse_value=Data_Read(Warehouse_ID, whse_id, node_id1, &flag);
 	if(flag==0)
 	{
 		printf("stmtGetCustWhse() not found, whse_id=%ld\n",whse_id);
-		PrintTable(Warehouse_ID);
 		exit(-1);
 	}
-	else if(flag<=-3)
+	else if(flag==-3)
 	{
 		AbortTransaction(0);
 		return -1;
 	}
 
-	cust_value=Data_Read(Customer_ID, cust_id, node_id3, &flag);
+	cust_value=Data_Read(Customer_ID, cust_id, node_id1, &flag);
 	if(flag==0)
 	{
 		printf("stmtGetCustWhse() not found, cust_id=%ld\n",cust_id);
-		PrintTable(Customer_ID);
 		exit(-1);
 	}
-	else if(flag<=-3)
+	else if(flag==-3)
 	{
 		AbortTransaction(0);
 		return -1;
 	}
 
-	//random value for 'c_discount, c_last, c_credit, w_tax'.
+	/* random value for 'c_discount, c_last, c_credit, w_tax'. */
 	c_discount=(int)((cust_value/CUST_CREDIT)%CUST_DISCOUNT);
 
-	//printf("1:%d\n",tdata->tid);
 	newOrderRowInserted=false;
 
 	while(!newOrderRowInserted)
 	{
-		//stmtGetDist
 		dist_id=(TupleId)(w_id+d_id*WHSE_ID);
 
 		dist_value=Data_Read(District_ID, dist_id, node_id1, &flag);
 		if(flag==0)
 		{
 			printf("stmtGetDist() not found, dist_id=%ld\n", dist_id);
-			PrintTable(District_ID);
 			exit(-1);
 		}
-		else if(flag<=-3)
+		else if(flag==-3)
 		{
 			AbortTransaction(0);
 			return -1;
@@ -901,14 +902,12 @@ int newOrderTransaction(int w_id, int d_id, int c_id, int o_ol_cnt, int o_all_lo
 		if(d_next_o_id < configCustPerDist)
 		{
 			printf("d_next_o_id=%d, dist_value=%ld, dist_id=%ld, flag=%d\n",d_next_o_id, dist_value, dist_id, flag);
-			PrintTable(District_ID);
 			exit(-1);
 		}
 
-		//random value for 'd_tax'.
+		/* random value for 'd_tax'. */
 		o_id=d_next_o_id;
 
-		//stmtInsertNewOrder
 		no_id=(TupleId)(o_id+(TupleId)w_id*ORDER_ID+(TupleId)d_id*ORDER_ID*WHSE_ID);
 		no_value=0;
 
@@ -918,9 +917,7 @@ int newOrderTransaction(int w_id, int d_id, int c_id, int o_ol_cnt, int o_all_lo
 		break;
 	}
 
-	//stmtUpdateDist
 	d_next_o_id=d_next_o_id+1;
-	//dist_id=(TupleId)(w_id*ORDER_ID+d_id*ORDER_ID*WHSE_ID);
 	dist_value=(TupleId)d_next_o_id;
 
 	result=Data_Update(District_ID, dist_id, dist_value, node_id1);
@@ -928,7 +925,6 @@ int newOrderTransaction(int w_id, int d_id, int c_id, int o_ol_cnt, int o_all_lo
 	{
 		printf("stmtUpdateDist() update failed, dist_id=%ld\n",dist_id);
 		exit(-1);
-
 	}
     else if(result < 0)
     {
@@ -936,7 +932,6 @@ int newOrderTransaction(int w_id, int d_id, int c_id, int o_ol_cnt, int o_all_lo
     	return -1;
     }
 
-	//stmtInsertOOrder
 	o_carrier_id=0;
 	oorder_id=(TupleId)(o_id+(TupleId)w_id*ORDER_ID+(TupleId)d_id*ORDER_ID*WHSE_ID);
 	oorder_value=(TupleId)(c_id+o_ol_cnt*CUST_ID+(TupleId)o_carrier_id*CUST_ID*ORDER_LINES);
@@ -957,19 +952,17 @@ int newOrderTransaction(int w_id, int d_id, int c_id, int o_ol_cnt, int o_all_lo
         if(ol_i_id < 0)
         {
         	AbortTransaction(0);
+
         	return -3;
         }
-
-    	//stmtGetItem
         item_id=(TupleId)ol_i_id;
-        item_value=Data_Read(Item_ID, item_id, node_id1, &flag);
+        item_value=Data_Read(Item_ID, item_id, node_id2, &flag);
         if(flag == 0)
         {
         	printf("stmtGetItem() not found, item_id=%ld\n",item_id);
-        	PrintTable(Item_ID);
         	exit(-1);
         }
-		else if(flag<=-3)
+		else if(flag==-3)
 		{
 			AbortTransaction(0);
 			return -1;
@@ -977,19 +970,20 @@ int newOrderTransaction(int w_id, int d_id, int c_id, int o_ol_cnt, int o_all_lo
         i_price=(int)(item_value);
 
 
-    	//stmtGetStock
         s_id=(TupleId)(ol_i_id+(TupleId)ol_supply_w_id*ITEM_ID);
-        s_value=Data_Read(Stock_ID, s_id, node_id1, &flag);
+        s_value=Data_Read(Stock_ID, s_id, node_id2, &flag);
         if(flag == 0)
         {
         	printf("stmtGetStock() not found, s_id=%ld\n",s_id);
         	exit(-1);
         }
-		else if(flag<=-3)
+		else if(flag==-3)
 		{
+			printf("%d stmtGetDist() readcollusion, dist_id=%ld\n",tdata->tid, dist_id);
 			AbortTransaction(0);
 			return -1;
 		}
+
         s_quantity=(int)(s_value);
 
         if(s_quantity - ol_quantity >= 10) {
@@ -998,16 +992,13 @@ int newOrderTransaction(int w_id, int d_id, int c_id, int o_ol_cnt, int o_all_lo
             s_quantity = s_quantity - ol_quantity + 91;
         }
 
-        // remote_cnt here.
-    	// stmtUpdateStock
         s_id=(TupleId)(ol_i_id+(TupleId)ol_supply_w_id*ITEM_ID);
 
         s_value=(TupleId)(s_quantity);
-        result=Data_Update(Stock_ID, s_id, s_value, node_id1);
+        result=Data_Update(Stock_ID, s_id, s_value, node_id2);
         if(result == 0)
         {
         	printf("stmtUpdateStock() update failed, s_id=%ld\n",s_id);
-        	PrintTable(Stock_ID);
         	exit(-1);
         }
         else if(result < 0)
@@ -1017,7 +1008,7 @@ int newOrderTransaction(int w_id, int d_id, int c_id, int o_ol_cnt, int o_all_lo
         }
 
         ol_amount=ol_quantity * i_price;
-    	//stmtInsertOrderLine
+
         ol_id=(TupleId)(o_id+(TupleId)w_id*ORDER_ID+(TupleId)d_id*ORDER_ID*WHSE_ID+(TupleId)ol_number*ORDER_ID*WHSE_ID*DIST_ID);
         ol_value=(TupleId)(ol_i_id+(TupleId)ol_supply_w_id*ITEM_ID+(TupleId)ol_quantity*ITEM_ID*WHSE_ID+(TupleId)ol_amount*ITEM_ID*WHSE_ID*ITEM_QUANTITY);
 
@@ -1083,7 +1074,6 @@ int paymentTransaction(int w_id, int c_w_id, int h_amount, int d_id, int c_d_id,
 		printf("node num error. %d\n", node_num);
 	}
 
-	//payUpdateWhse
 	whse_id=(TupleId)w_id;
 	whse_value=(TupleId)h_amount;
 
@@ -1099,39 +1089,36 @@ int paymentTransaction(int w_id, int c_w_id, int h_amount, int d_id, int c_d_id,
     	return -1;
     }
 
-	//payGetWhse
 	whse_value=Data_Read(Warehouse_ID, whse_id, node_id1, &flag);
 	if(flag==0)
 	{
 		printf("payGetWhse() not found,whse_id=%ld\n",whse_id);
 		exit(-1);
 	}
-	else if(flag<=-3)
+	else if(flag==-3)
 	{
 		AbortTransaction(0);
-		return -2;
+		return -1;
 	}
 
-	//payUpdateDist
 	dist_id=(TupleId)(w_id+d_id*WHSE_ID);
 	dist_value=(TupleId)h_amount;
 
 
-	//payGetDist
 	dist_value=Data_Read(District_ID, dist_id, node_id1, &flag);
 	if(flag==0)
 	{
 		printf("payGetDist() not found,dist_id=%ld\n",dist_id);
 		exit(-1);
 	}
-	else if(flag<=-3)
+	else if(flag==-3)
 	{
 		AbortTransaction(0);
-		return -5;
+		return -1;
 	}
 
-	// payment is by customer ID
-	//payGetCust
+	/* payment is by customer ID */
+
 	cust_id=(TupleId)(c_id+c_w_id*CUST_ID+(TupleId)c_d_id*CUST_ID*WHSE_ID);
 	cust_value=Data_Read(Customer_ID, cust_id, node_id2, &flag);
 	if(flag == 0)
@@ -1139,13 +1126,12 @@ int paymentTransaction(int w_id, int c_w_id, int h_amount, int d_id, int c_d_id,
 		printf("payGetCust() not found, cust_id=%ld\n",cust_id);
 		exit(-1);
 	}
-	else if(flag<=-3)
+	else if(flag==-3)
 	{
 		AbortTransaction(0);
-		return -6;
+		return -1;
 	}
 
-	//c_credit+c_discount*CUST_CREDIT+c_balance*CUST_CREDIT*CUST_DISCOUNT
 	c_credit=(int)(cust_value%CUST_CREDIT);
 
 	cust_value=(cust_value-c_credit)/CUST_CREDIT;
@@ -1159,17 +1145,16 @@ int paymentTransaction(int w_id, int c_w_id, int h_amount, int d_id, int c_d_id,
 
 	if(c_credit == 0)//bad credit
 	{
-		//payGetCustCdata
 		cust_value=Data_Read(Customer_ID, cust_id, node_id2, &flag);
 		if(flag == 0)
 		{
 			printf("payGetCust() not found, cust_id=%ld\n",cust_id);
 			exit(-1);
 		}
-		else if(flag<=-3)
+		else if(flag==-3)
 		{
 			AbortTransaction(0);
-			return -7;
+			return -1;
 		}
 
 		//payUpdateCustBalCdata
@@ -1183,7 +1168,7 @@ int paymentTransaction(int w_id, int c_w_id, int h_amount, int d_id, int c_d_id,
         else if(result < 0)
         {
         	AbortTransaction(0);
-        	return -8;
+        	return -1;
         }
 
 	}
@@ -1200,7 +1185,7 @@ int paymentTransaction(int w_id, int c_w_id, int h_amount, int d_id, int c_d_id,
         else if(result < 0)
         {
         	AbortTransaction(0);
-        	return -9;
+        	return -1;
         }
 	}
 
@@ -1218,14 +1203,11 @@ int paymentTransaction(int w_id, int c_w_id, int h_amount, int d_id, int c_d_id,
 	else
 	{
 		AbortTransaction(index);
-		transaction_result=-10;
+		transaction_result=-3;
 	}
 	return transaction_result;
 }
 
-/*
- *
- */
 int deliveryTransaction(int w_id, int o_carrier_id, int* node_id, int node_num)
 {
 	StartTransaction();
@@ -1310,7 +1292,7 @@ int deliveryTransaction(int w_id, int o_carrier_id, int* node_id, int node_num)
 				printf("delivGetCustId() not found, oo_id=%ld\n",oo_id);
 				exit(-1);
 			}
-			else if(flag<=-3)
+			else if(flag==-3)
 			{
 				printf("delivGetCustId() readcollusion, oo_id=%ld\n",oo_id);
 				AbortTransaction(0);
@@ -1334,8 +1316,7 @@ int deliveryTransaction(int w_id, int o_carrier_id, int* node_id, int node_num)
 	        	AbortTransaction(0);
 	        	return -1;
 	        }
-			//delivUpdateDeliveryDate
-
+			/* delivUpdateDeliveryDate */
 			/*
 			 * skip this operation.
 			 */
@@ -1355,7 +1336,7 @@ int deliveryTransaction(int w_id, int o_carrier_id, int* node_id, int node_num)
 					printf("delivSumOrderAmount() not found, ol_id=%ld\n",ol_id);
 					exit(-1);
 				}
-				else if(flag<=-3)
+				else if(flag==-3)
 				{
 					printf("delivSumOrderAmount() readcollusion, ol_id=%ld\n",ol_id);
 					AbortTransaction(0);
@@ -1375,7 +1356,7 @@ int deliveryTransaction(int w_id, int o_carrier_id, int* node_id, int node_num)
 				printf("delivUpdateCustBalDelivCnt() not found , cust_id=%ld\n",cust_id);
 				exit(-1);
 			}
-			else if(flag<=-3)
+			else if(flag==-3)
 			{
 				printf("delivUpdateCustBalDelivCnt() readcollusion, cust_id=%ld\n",cust_id);
 				AbortTransaction(0);
@@ -1463,7 +1444,7 @@ int orderStatusTransaction(int w_id, int d_id, int c_id, int* node_id, int node_
 		printf("ordStatGetCustBal() not found, cust_id=%ld\n",cust_id);
 		exit(-1);
 	}
-	else if(flag<=-3)
+	else if(flag==-3)
 	{
 		printf("ordStatGetCustBal() readcollusion, cust_id=%ld\n",cust_id);
 		AbortTransaction(0);
@@ -1472,16 +1453,14 @@ int orderStatusTransaction(int w_id, int d_id, int c_id, int* node_id, int node_
 
 	c_balance=(int)(cust_value/(CUST_CREDIT*CUST_DISCOUNT));
 
-	// find the newest order for the customer
+	/* find the newest order for the customer */
 	oo_id=(TupleId)((TupleId)w_id*ORDER_ID+(TupleId)d_id*ORDER_ID*WHSE_ID);
 	oo_value=(TupleId)(c_id);
 
-	//oo_value=Data_Read(Order_ID, oo_id, 0, oo_value);
 	o_id=GetMaxOid(Order_ID, w_id, d_id, c_id);
 
-	//printf("GetMaxOid: o_id=%d\n",o_id);
 
-	// retrieve the carrier & order date for the most recent order.
+	/* retrieve the carrier & order date for the most recent order. */
 	if(o_id > 0)
 	{
 		oo_id=(TupleId)(o_id+(TupleId)w_id*ORDER_ID+(TupleId)d_id*ORDER_ID*WHSE_ID);
@@ -1491,7 +1470,7 @@ int orderStatusTransaction(int w_id, int d_id, int c_id, int* node_id, int node_
 			printf("orderStatus_get_order() not found , oo_id=%ld\n",oo_id);
 			exit(-1);
 		}
-		else if(flag<=-3)
+		else if(flag==-3)
 		{
 			printf("orderStatus_get_order() readcollusion, oo_id=%ld\n",oo_id);
 			AbortTransaction(0);
@@ -1504,7 +1483,7 @@ int orderStatusTransaction(int w_id, int d_id, int c_id, int* node_id, int node_
 			o_ol_cnt=(int)((oo_value/CUST_ID)%ORDER_LINES);
 		}
 
-		// retrieve the order lines for the most recent order
+		/* retrieve the order lines for the most recent order */
 		ol_o_id=o_id;
 		ol_w_id=w_id;
 		ol_d_id=d_id;
@@ -1517,14 +1496,13 @@ int orderStatusTransaction(int w_id, int d_id, int c_id, int* node_id, int node_
 				printf("orderstatus_orderline() not found, ol_id=%ld\n",ol_id);
 				exit(-1);
 			}
-			else if(flag<=-3)
+			else if(flag==-3)
 			{
 				printf("orderstatus_orderline() readcollusion, ol_id=%ld\n",ol_id);
 				AbortTransaction(0);
 				return -1;
 			}
 
-			//ol_i_id+ol_supply_w_id*ITEM_ID+ol_quantity*ITEM_ID*WHSE_ID+ol_amount*ITEM_ID*WHSE_ID*ITEM_QUANTITY
 			ol_i_id=(int)(ol_value%ITEM_ID);
 			ol_supply_w_id=(int)((ol_value/ITEM_ID)%WHSE_ID);
 			ol_quantity=(int)((ol_value/(ITEM_ID*WHSE_ID))%ITEM_QUANTITY);
@@ -1545,6 +1523,7 @@ int orderStatusTransaction(int w_id, int d_id, int c_id, int* node_id, int node_
 	if(result == 1)
 	{
 		transaction_result=CommitTransaction();
+		//printf("order_status transaction commit.\n");
 	}
 	else
 	{
@@ -1605,7 +1584,7 @@ int stockLevelTransaction(int w_id, int d_id, int threshold, int* node_id, int n
 		printf("stockGetDistOrderId() not found, dist_id=%ld\n",dist_id);
 		exit(-1);
 	}
-	else if(flag<=-3)
+	else if(flag==-3)
 	{
 		AbortTransaction(0);
 		return -1;
@@ -1614,12 +1593,11 @@ int stockLevelTransaction(int w_id, int d_id, int threshold, int* node_id, int n
 	o_id=(int)(dist_value);
 
 	//stockGetCountStock
-	//ol_o_id = (o_id-20 > 0) ? o_id-20 : 1;
 	ol_o_id = (o_id-20 > 0) ? o_id-20 : 1;
 
 	for(;ol_o_id < o_id;ol_o_id++)//for each order
 	{
-		//get the order_line number.
+		/* get the order_line number. */
 		oo_id=(TupleId)(ol_o_id+(TupleId)w_id*ORDER_ID+(TupleId)d_id*ORDER_ID*WHSE_ID);
 		oo_value=Data_Read(Order_ID, oo_id, node_id1, &flag);
 		if(flag==0)
@@ -1627,7 +1605,7 @@ int stockLevelTransaction(int w_id, int d_id, int threshold, int* node_id, int n
 			printf("stocklevel_eachorder() not found, oo_id=%ld\n",oo_id);
 			exit(-1);
 		}
-		else if(flag<=-3)
+		else if(flag==-3)
 		{
 			AbortTransaction(0);
 			return -1;
@@ -1635,10 +1613,10 @@ int stockLevelTransaction(int w_id, int d_id, int threshold, int* node_id, int n
 
 		ol_cnt=(int)((oo_value/CUST_ID)%ORDER_LINES);
 
-		//for each item in the order.
+		/* for each item in the order. */
 		for(ol_number=1;ol_number<=ol_cnt;ol_number++)
 		{
-			//get item_id.
+			/* get item_id. */
 			ol_id=(TupleId)(ol_o_id+(TupleId)w_id*ORDER_ID+(TupleId)d_id*ORDER_ID*WHSE_ID+(TupleId)ol_number*ORDER_ID*WHSE_ID*DIST_ID);
 			ol_value=Data_Read(OrderLine_ID, ol_id, node_id1, &flag);
 			if(flag==0)
@@ -1646,7 +1624,7 @@ int stockLevelTransaction(int w_id, int d_id, int threshold, int* node_id, int n
 				printf("stocklevel_eachitem() not found, ol_id=%ld\n",ol_id);
 				exit(-1);
 			}
-			else if(flag<=-3)
+			else if(flag==-3)
 			{
 				AbortTransaction(0);
 				return -1;
@@ -1654,21 +1632,23 @@ int stockLevelTransaction(int w_id, int d_id, int threshold, int* node_id, int n
 
 			ol_i_id=(int)(ol_value%ITEM_ID);
 
-			//get the stock_count.
+			/* get the stock_count. */
 			stock_id=(TupleId)(ol_i_id+(TupleId)w_id*ITEM_ID);
-			stock_value=Data_Read(Stock_ID, stock_id, node_id1, &flag);
+			stock_value=Data_Read(Stock_ID, stock_id, node_id2, &flag);
 			if(flag==0)
 			{
 				printf("stocklevel_stockcount() not found, stock_id=%ld, %ld %d\n",stock_id, ol_value, flag);
 				exit(-1);
 			}
-			else if(flag<=-3)
+			else if(flag==-3)
 			{
 				AbortTransaction(0);
 				return -1;
 			}
 
+
 			s_quantity=(int)(stock_value);
+
 			if(s_quantity < threshold)stock_count++;
 		}
 	}
@@ -1720,7 +1700,7 @@ int GetMaxOid(int table_id, int w_id, int d_id, int c_id)
 
 int GetMinOid(int table_id, int w_id, int d_id)
 {
-	TupleId tuple_id, tuple_value;
+	TupleId tuple_id;
 	int bucket_id, bucket_size;
 	int i, temp_oid;
 	uint64_t min, max;
@@ -1756,7 +1736,6 @@ int GetMinOid(int table_id, int w_id, int d_id)
 int testTransaction(int w_id, int d_id)
 {
 	int result, index, transaction_result;
-	int flag;
 	int i;
 
 	int min, max;
@@ -1780,7 +1759,6 @@ int testTransaction(int w_id, int d_id)
 
 	for(i=0;i<10;i++)
 	{
-
 		tuple_value=0;
 		tuple_id=(TupleId)getItemID();
 		result=Data_Update(Item_ID, tuple_id, tuple_value, node_id);

@@ -2,7 +2,7 @@
  * proc.h
  *
  *  Created on: 2015-11-9
- *      Author: XiaoXin
+ *      Author: Xiao Xin
  */
 
 /*
@@ -45,11 +45,11 @@ struct PROC
 
 	CommitId cid_min;
 
-	int index; //the index for per thread.
+	int index;//the index for per thread.
 
 	CommitId cid;
 
-	// to tell whether the [S,C] has been determined.
+	//to tell whether the [S,C] has been determined.
 	int complete;
 };
 
@@ -57,8 +57,8 @@ typedef struct PROC PROC;
 
 struct THREADINFO
 {
-	int index; // index for process array.
-	char* memstart; // start address of current thread's private memory.
+	int index;//index for process array.
+	char* memstart;//start address of current thread's private memory.
 
 	TransactionId curid;
 	TransactionId maxid;
@@ -66,7 +66,7 @@ struct THREADINFO
 
 typedef struct THREADINFO THREAD;
 
-// record struct for the process in committing.
+//record struct for the process in committing.
 struct PROCCOMMIT
 {
 	TransactionId tid;
@@ -79,12 +79,12 @@ typedef struct terminalArgs
 {
 	int whse_id;
 	int dist_id;
-	int type; // '0' for load data, '1' for run transaction.
+	int type;//'0' for load data, '1' for run transaction.
 
-	// used to wait until all terminals arrive.
+	//used to wait until all terminals arrive.
 	pthread_barrier_t *barrier;
 
-	// used to transactions statistic.
+	//used to transactions statistic.
 	TransState *StateInfo;
 }terminalArgs;
 
@@ -118,6 +118,7 @@ extern int IsPairConflict(int index, CommitId cid);
 
 extern void AtEnd_ProcArray(int index);
 
+//extern bool IsTransactionActive(int index, int windex, int rindex, TransactionId tid, TransactionId wtid, TransactionId rtid);
 extern bool IsTransactionActive(int index, TransactionId tid, bool IsRead, StartId* sid, CommitId* cid);
 
 extern int ForceUpdateProcSidMax(int index, CommitId cid);

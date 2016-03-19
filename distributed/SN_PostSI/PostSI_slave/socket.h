@@ -1,19 +1,13 @@
-/*
- * socket.h
- *
- *  Created on: Jan 18, 2016
- *      Author: Yu
- */
-
 #ifndef SOCKET_H_
 #define SOCKET_H_
+
 #include "type.h"
 #define NODENUM nodenum
 #define THREADNUM threadnum
 
 #define NODENUMMAX 20
 #define THREADNUMMAX 64
-#define LINEMAX 100
+#define LINEMAX 20
 
 #define SEND_BUFFER_MAXSIZE 8
 #define RECV_BUFFER_MAXSIZE 1000

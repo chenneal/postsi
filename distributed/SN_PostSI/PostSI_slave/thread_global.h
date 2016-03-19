@@ -28,8 +28,6 @@ extern pthread_key_t* keyarray;
 
 #define OldReadListKey keyarray[7]
 
-#define SidMinKey keyarray[8]
-
 #define GlobalLockNum 20
 
 

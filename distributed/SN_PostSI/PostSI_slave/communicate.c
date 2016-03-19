@@ -1,10 +1,3 @@
-/*
- * communicate.c
- *
- *  Created on: Dec 29, 2015
- *      Author: Yu
- */
-
 #include <sys/socket.h>
 #include "type.h"
 #include "socket.h"

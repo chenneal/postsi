@@ -1,10 +1,3 @@
-/*
- * socket.c
- *
- *  Created on: Jan 18, 2016
- *      Author: Yu
- */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
@@ -19,17 +12,16 @@
 
 void* Respond(void *sockp);
 
-// send buffer and receive buffer for client
+/* send buffer and receive buffer for client */
 uint64_t ** send_buffer;
 uint64_t ** recv_buffer;
 
-// send buffer for server respond.
+/* send buffer for server respond. */
 uint64_t ** ssend_buffer;
 uint64_t ** srecv_buffer;
 
-/*
-  * this array is used to save the connect with other nodes in the distributed system.
-  * the connect with other slave node should be maintained until end of the process.  */
+/* this array is used to save the connect with other nodes in the distributed system.
+ * the connect with other slave node should be maintained until end of the process.  */
 
 int connect_socket[NODENUMMAX][THREADNUMMAX];
 
@@ -41,7 +33,7 @@ int param_socket;
 
 int nodeid;
 
-// the number of nodes should not be larger than NODE NUMBER MAX
+/* the number of nodes should not be larger than NODE NUMBER MAX */
 char node_ip[NODENUMMAX][20];
 
 int message_port;
@@ -51,7 +43,8 @@ int port_base;
 char master_ip[20];
 
 pthread_t * server_tid;
-// read the configure parameters from the configure file.
+
+/* read the configure parameters from the configure file. */
 int ReadConfig(char * find_string, char * result)
 {
    int i;
@@ -84,7 +77,7 @@ int ReadConfig(char * find_string, char * result)
       else
       {
          k = 0;
-         // jump over the character ':' and the space character.
+         /* jump over the character ':' and the space character. */
          j = j + 2;
          while (buffer[j] != '\0')
          {
@@ -179,7 +172,7 @@ void InitMessageClient(void)
 	message_socket = slave_sockfd;
 }
 
-// nid is the id of node in the distributed system
+/* nid is the id of node in the distributed system */
 void InitClient(int nid, int threadid)
 {
 	int slave_sockfd;
@@ -191,46 +184,53 @@ void InitClient(int nid, int threadid)
 	mastersock_addr.sin_addr.s_addr = inet_addr(node_ip[nid]);
 	mastersock_addr.sin_family = AF_INET;
 	mastersock_addr.sin_port = htons(port);
+
 	if (connect(slave_sockfd, (struct sockaddr *)&mastersock_addr, sizeof(mastersock_addr)) < 0)
 	{
 		printf("client connect error!\n");
 	    exit(1);
 	}
+
 	connect_socket[nid][threadid] = slave_sockfd;
 }
 
 void InitServer(void)
 {
 	int status;
-	// record the accept socket fd of the connected client
+	/* record the accept socket fd of the connected client */
 	int conn;
 	server_tid = (pthread_t *) malloc ((NODENUM*THREADNUM+1)*sizeof(pthread_t));
 	server_arg *argu = (server_arg *)malloc((NODENUM*THREADNUM+1)*sizeof(server_arg));
 	int master_sockfd;
     int port = port_base + nodeid;
-	// use the TCP protocol
+	/* use the TCP protocol */
 	master_sockfd = socket(AF_INET, SOCK_STREAM, 0);
-	// bind
+	//bind
 	struct sockaddr_in mastersock_addr;
 	memset(&mastersock_addr, 0, sizeof(mastersock_addr));
 	mastersock_addr.sin_family = AF_INET;
 	mastersock_addr.sin_port = htons(port);
 	mastersock_addr.sin_addr.s_addr = INADDR_ANY;
+
 	if (bind(master_sockfd, (struct sockaddr *)&mastersock_addr, sizeof(mastersock_addr)) == -1)
 	{
 		printf("bind error!\n");
 		exit(1);
 	}
-	// listen
+	/* listen */
     if(listen(master_sockfd, LISTEN_QUEUE) == -1)
     {
         printf("listen error!\n");
         exit(1);
     }
+
+    /* Important here , the transaction process should always wait for the server initialization */
     sem_post(wait_server);
+    /* receive or transfer data */
 	socklen_t slave_length;
 	struct sockaddr_in slave_addr;
 	slave_length = sizeof(slave_addr);
+
    	int i = 0;
     while(i < (NODENUM*THREADNUM+1))
     {
@@ -248,7 +248,7 @@ void InitServer(void)
     	i++;
     }
 
-    // wait the child threads to complete.
+    /* wait the child threads to complete. */
     for (i = 0; i < NODENUM*THREADNUM+1; i++)
        pthread_join(server_tid[i], NULL);
 }
@@ -291,9 +291,6 @@ void* Respond(void *pargu)
    	       case cmd_updatefind:
                ProcessUpdateFind(srecv_buffer[index], conn, index);
                break;
-   	       case cmd_updatewritelistinsert:
-   	    	   ProcessUpdateWirteList(srecv_buffer[index], conn, index);
-   	    	   break;
    	       case cmd_updateconflict:
    	    	   ProcessUpdateConflict(srecv_buffer[index], conn, index);
    	    	   break;
@@ -362,11 +359,11 @@ void InitNetworkParam(void)
 
    for (i = 0; i < NODENUMMAX; i++)
    {
-	sprintf(node, "nodeip%d", i);
-	if(ReadConfig(node, node_ip[i])==-1)
-		break;
+      sprintf(node, "nodeip%d", i);
+      if (ReadConfig(node, node_ip[i]) == -1)
+    	  break;
    }
-} 
+}
 
 void GetParam(void)
 {

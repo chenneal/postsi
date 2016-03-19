@@ -5,10 +5,12 @@
  *      Author: xiaoxin
  */
 
+
 /*
  * interface functions for recording data update during
  * transaction running.
  */
+
 #include<assert.h>
 #include<sys/socket.h>
 #include"data_record.h"
@@ -33,41 +35,52 @@ void GetPosition(Record * r, int * tableid, int * h)
 
 void CommitInsertData(int table_id, uint64_t index, CommitId cid, int nid)
 {
-   THREAD* threadinfo;
-   int index2;
-   threadinfo=(THREAD*)pthread_getspecific(ThreadInfoKey);
-   index2=threadinfo->index;
-   int lindex;
-   lindex = GetLocalIndex(index2);
-   if((Send4(lindex, nid, cmd_commitinsert, table_id, index, cid)) == -1)
-	   printf("commit insert send error!\n");
-   if((Recv(lindex, nid, 1)) == -1)
-	   printf("commit insert recv error!\n");
+	THREAD* threadinfo;
+	int index2;
+	int status;
+
+	threadinfo=(THREAD*)pthread_getspecific(ThreadInfoKey);
+	index2=threadinfo->index;
+
+	index2=threadinfo->index;
+	int lindex;
+	lindex = GetLocalIndex(index2);
+	if((Send4(lindex, nid, cmd_commitinsert, table_id, index, cid)) == -1)
+		printf("commit insert send error!\n");
+	if((Recv(lindex, nid, 1)) == -1)
+		printf("commit insert recv error!\n");
 }
 
 void CommitUpdateData(int table_id, uint64_t index, CommitId cid, int nid)
 {
 	int index2;
+	int status;
+
 	THREAD* threadinfo;
     threadinfo=(THREAD*)pthread_getspecific(ThreadInfoKey);
 	index2=threadinfo->index;
+
 	int lindex;
 	lindex = GetLocalIndex(index2);
+
 	if (Send4(lindex, nid, cmd_commitupdate, table_id, index, cid) == -1)
 		printf("commit update send error\n");
     if((Recv(lindex, nid, 1)) == -1)
     	printf("commit update recv error\n");
-
 }
 
 void CommitDeleteData(int table_id, uint64_t index, CommitId cid, int nid)
 {
 	int index2;
+	int status;
+
 	THREAD* threadinfo;
     threadinfo=(THREAD*)pthread_getspecific(ThreadInfoKey);
 	index2=threadinfo->index;
+
 	int lindex;
 	lindex = GetLocalIndex(index2);
+
 	if (Send4(lindex, nid, cmd_commitupdate, table_id, index, cid) == -1)
 		printf("commit delete send error\n");
     if((Recv(lindex, nid, 1)) == -1)
@@ -78,10 +91,14 @@ void AbortInsertData(int table_id, uint64_t index, int nid)
 {
 	int index2;
 	THREAD* threadinfo;
+	int status;
+
     threadinfo=(THREAD*)pthread_getspecific(ThreadInfoKey);
 	index2=threadinfo->index;
+
 	int lindex;
 	lindex = GetLocalIndex(index2);
+
 	if (Send3(lindex, nid, cmd_abortupdate, table_id, index) == -1)
 		printf("abort insert send error\n");
     if((Recv(lindex, nid, 1)) == -1)
@@ -92,11 +109,15 @@ void AbortUpdateData(int table_id, uint64_t index, int nid)
 {
 	bool isdelete = false;
 	int index2;
+	int status;
+
 	THREAD* threadinfo;
     threadinfo=(THREAD*)pthread_getspecific(ThreadInfoKey);
 	index2=threadinfo->index;
+
 	int lindex;
 	lindex = GetLocalIndex(index2);
+
 	if (Send4(lindex, nid, cmd_abortupdate, table_id, index, isdelete) == -1)
 		printf("abort update send error\n");
     if((Recv(lindex, nid, 1)) == -1)
@@ -107,11 +128,15 @@ void AbortDeleteData(int table_id, uint64_t index, int nid)
 {
 	bool isdelete = true;
 	int index2;
+	int status;
+
 	THREAD* threadinfo;
     threadinfo=(THREAD*)pthread_getspecific(ThreadInfoKey);
 	index2=threadinfo->index;
+
 	int lindex;
 	lindex = GetLocalIndex(index2);
+
 	if (Send4(lindex, nid, cmd_abortupdate, table_id, index, isdelete) == -1)
 		printf("abort delete send error\n");
     if((Recv(lindex, nid, 1)) == -1)
@@ -128,7 +153,7 @@ void DataRecordInsert(DataRecord* datard)
 	char* DataMemStart;
 	DataRecord* ptr;
 
-	// get the thread's pointer to data memory.
+	/* get the thread's pointer to data memory. */
 	DataMemStart=(char*)pthread_getspecific(DataMemKey);
 
 	start=(char*)((char*)DataMemStart+DataNumSize);
@@ -136,16 +161,16 @@ void DataRecordInsert(DataRecord* datard)
 
 	if(DataNumSize+(num+1)*sizeof(DataRecord) > DataMemSize())
 	{
-		printf("data memory out of space. PID: %d\n",pthread_self());
+		printf("data memory out of space. PID: %ld\n",pthread_self());
 		return;
 	}
 
 	*(int*)DataMemStart=num+1;
 
-	// start address for record to insert.
+	/* start address for record to insert. */
 	start=start+num*sizeof(DataRecord);
 
-	// insert the data record here.
+	/* insert the data record here. */
 	ptr=(DataRecord*)start;
 	ptr->type=datard->type;
 
@@ -171,7 +196,7 @@ void InitDataMemAlloc(void)
 	THREAD* threadinfo;
 	Size size;
 
-	// get start address of current thread's memory.
+	/* get start address of current thread's memory. */
 	threadinfo=(THREAD*)pthread_getspecific(ThreadInfoKey);
 	memstart=threadinfo->memstart;
 
@@ -181,11 +206,11 @@ void InitDataMemAlloc(void)
 
 	if(DataMemStart==NULL)
 	{
-		printf("thread memory allocation error for data memory.PID:%d\n",pthread_self());
+		printf("thread memory allocation error for data memory.PID:%ld\n",pthread_self());
 		return;
 	}
 
-	// set global variable.
+	/* set global variable. */
 	pthread_setspecific(DataMemKey,DataMemStart);
 }
 
@@ -216,7 +241,7 @@ void CommitDataRecord(TransactionId tid, CommitId cid)
 
 	num=*(int*)DataMemStart;
 
-	// deal with data-update record one by one.
+	/* deal with data-update record one by one. */
 	for(i=0;i<num;i++)
 	{
 		ptr=(DataRecord*)(start+i*sizeof(DataRecord));
@@ -225,17 +250,20 @@ void CommitDataRecord(TransactionId tid, CommitId cid)
 		nid = ptr->node_id;
 		switch(ptr->type)
 		{
-		case DataInsert:
-			CommitInsertData(table_id, index, cid, nid);
-			break;
-		case DataUpdate:
-			CommitUpdateData(table_id, index, cid, nid);
-			break;
-		case DataDelete:
-			CommitDeleteData(table_id, index, cid, nid);
-			break;
-		default:
-			printf("shouldn't arrive here.\n");
+			case DataInsert:
+				CommitInsertData(table_id, index, cid, nid);
+				break;
+
+			case DataUpdate:
+				CommitUpdateData(table_id, index, cid, nid);
+				break;
+
+			case DataDelete:
+				CommitDeleteData(table_id, index, cid, nid);
+				break;
+
+			default:
+				printf("shouldn't arrive here.\n");
 		}
 	}
 }
@@ -256,10 +284,10 @@ void AbortDataRecord(TransactionId tid, int trulynum)
 
 	DataMemStart=(char*)pthread_getspecific(DataMemKey);
 	start=DataMemStart+DataNumSize;
-	// transaction abort in function CommitTransaction.
+	/* transaction abort in function CommitTransaction. */
 	if(trulynum==-1)
 		num=*(int*)DataMemStart;
-	// transaction abort in function AbortTransaction.
+	/* transaction abort in function AbortTransaction. */
 	else
 		num=trulynum;
 
@@ -271,17 +299,20 @@ void AbortDataRecord(TransactionId tid, int trulynum)
 		nid=ptr->node_id;
 		switch(ptr->type)
 		{
-		case DataInsert:
-			AbortInsertData(table_id, index, nid);
-			break;
-		case DataUpdate:
-			AbortUpdateData(table_id, index, nid);
-			break;
-		case DataDelete:
-			AbortDeleteData(table_id, index, nid);
-			break;
-		default:
-			printf("shouldn't get here.\n");
+			case DataInsert:
+				AbortInsertData(table_id, index, nid);
+				break;
+
+			case DataUpdate:
+				AbortUpdateData(table_id, index, nid);
+				break;
+
+			case DataDelete:
+				AbortDeleteData(table_id, index, nid);
+				break;
+
+			default:
+				printf("shouldn't get here.\n");
 		}
 	}
 }
@@ -293,7 +324,7 @@ void AbortDataRecord(TransactionId tid, int trulynum)
  */
 void DataRecordSort(DataRecord* dr, int num)
 {
-	// sort according to the table_id and tuple_id;
+	/* sort according to the table_id and tuple_id and node_id*/
 	DataRecord* ptr1, *ptr2;
 	DataRecord* startptr=dr;
 	DataRecord temp;
@@ -348,18 +379,17 @@ TupleId IsDataRecordVisible(char* DataMemStart, int table_id, TupleId tuple_id, 
 		{
 			if(ptr->type == DataDelete)
 			{
-				// the tuple has been deleted by current transaction.
+				/* the tuple has been deleted by current transaction. */
 				return -1;
 			}
 			else
 			{
-				// insert or update.
 				return ptr->value;
 			}
 		}
 	}
 
-	// first access the tuple.
+	/* first access the tuple. */
 	return 0;
 }
 

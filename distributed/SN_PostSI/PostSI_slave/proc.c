@@ -2,12 +2,12 @@
  * proc.c
  *
  *  Created on: 2015-11-9
- *      Author: XiaoXin
+ *      Author: DELL
  */
-
 /*
  * process actions are defined here.
  */
+
 #include<malloc.h>
 #include<pthread.h>
 #include<stdlib.h>
@@ -25,111 +25,110 @@
 #include "util.h"
 
 PROCHEAD* prohd;
-int proc_shmid;
 PROC* procbase;
+int proc_shmid;
 
-// pointer to process in committing.
-PROCCOMMIT* proccommit;
-
-// Proc information should be stored in the shared memory.
+/* Proc information should be stored in the shared memory. */
 void InitProc(void)
 {
-	Size size;
-	int i;
-	PROC* proc;
-	// initialize the process array information.
-	prohd=(PROCHEAD*)malloc(sizeof(PROCHEAD));
-	prohd->maxprocs=THREADNUM;
-	prohd->numprocs=0;
+   Size size;
+   int i;
+   PROC* proc;
+   /* initialize the process array information. */
+   prohd=(PROCHEAD*)malloc(sizeof(PROCHEAD));
+   prohd->maxprocs=THREADNUM;
+   prohd->numprocs=0;
 
-	// initialize the process array.
-	size=ProcArraySize();
-	proc_shmid = shmget(IPC_PRIVATE, size, SHM_MODE);
-	if (proc_shmid == -1)
-	{
-		printf("proc shmget error.\n");
-		return;
-	}
-	procbase=(PROC*)shmat(proc_shmid, 0, 0);
-	if (procbase == (PROC*)-1)
-	{
-		printf("proc shmat error.\n");
-		return;
-	}
 
-	memset((char*)procbase,0,ProcArraySize());
+   size=ProcArraySize();
 
-	for(i=0;i<THREADNUM;i++)
-	{
-		proc=(PROC*)((char*)procbase+i*sizeof(PROC));
-		proc->index=i;
-	}
+   proc_shmid = shmget(IPC_PRIVATE, size, SHM_MODE);
+   if (proc_shmid == -1)
+   {
+      printf("proc shmget error.\n");
+	  return;
+   }
+
+   procbase=(PROC*)shmat(proc_shmid, 0, 0);
+   if (procbase == (PROC*)-1)
+   {
+      printf("proc shmat error.\n");
+	  return;
+   }
+
+   memset((char*)procbase,0,ProcArraySize());
+
+   for(i=0;i<THREADNUM;i++)
+   {
+      proc=(PROC*)((char*)procbase+i*sizeof(PROC));
+	  proc->index=i;
+   }
 }
 
 void *ProcStart(void* args)
 {
-	int i;
-	int j;
-	char* start=NULL;
-	THREAD* threadinfo;
+   int i;
+   int j;
+   char* start=NULL;
+   THREAD* threadinfo;
 
-	int type;
+   int type;
 
-	Size size;
+   Size size;
 
-	terminalArgs* param=(terminalArgs*)args;
+   terminalArgs* param=(terminalArgs*)args;
 
-	type=param->type;
+   type=param->type;
 
-	pthread_mutex_lock(&prohd->ilock);
-	i=prohd->numprocs++;
-	pthread_mutex_unlock(&prohd->ilock);
+   pthread_mutex_lock(&prohd->ilock);
+   i=prohd->numprocs++;
+   pthread_mutex_unlock(&prohd->ilock);
 
-	start=(char*)MemStart+MEM_PROC_SIZE*i;
+   start=(char*)MemStart+MEM_PROC_SIZE*i;
 
-	size=sizeof(THREAD);
+   size=sizeof(THREAD);
 
-	threadinfo=(THREAD*)MemAlloc((void*)start,size);
+   threadinfo=(THREAD*)MemAlloc((void*)start,size);
 
-	if(threadinfo==NULL)
-	{
-		printf("memory alloc error during process running.\n");
-		exit(-1);
-	}
+   if(threadinfo==NULL)
+   {
+      printf("memory alloc error during process running.\n");
+	  exit(-1);
+   }
 
-	pthread_setspecific(ThreadInfoKey,threadinfo);
+   pthread_setspecific(ThreadInfoKey,threadinfo);
 
-	threadinfo->index= nodeid*THREADNUM+i;
-	threadinfo->memstart=(char*)start;
+   threadinfo->index= nodeid*THREADNUM+i;
+   threadinfo->memstart=(char*)start;
 
-	if(type==1 && i ==0)
-		threadinfo->curid=thread_0_tid+1;
-	else
-		threadinfo->curid=threadinfo->index*MaxTransId+1;
+   if(type==1 && i ==0)
+      threadinfo->curid=thread_0_tid+1;
+   else
+      threadinfo->curid=threadinfo->index*MaxTransId+1;
 
-	// initialize the transaction ID assignment for per thread.
-	ProcTransactionIdAssign(threadinfo);
+   /* initialize the transaction ID assignment for per thread. */
+   ProcTransactionIdAssign(threadinfo);
 
-	InitRandomSeed();
+   InitRandomSeed();
 
-	InitTransactionStructMemAlloc();
+   InitTransactionStructMemAlloc();
 
-	if (type == 1)
-	{
-       for (j = 0; j < NODENUM; j++)
-       {
-	      InitClient(j, i);
-       }
-	}
-	else
-	{
-		InitClient(nodeid, i);
-	}
+   if (type == 1)
+   {
+      for (j = 0; j < NODENUM; j++)
+      {
+	     InitClient(j, i);
+      }
+   }
+   else
+   {
+      InitClient(nodeid, i);
+   }
 
-	// start running transactions here.
-	TransactionRunSchedule(args);
+   /* start running transactions here. */
+   TransactionRunSchedule(args);
 
-	return NULL;
+   return NULL;
 }
 
 Size ProcArraySize(void)
@@ -151,7 +150,7 @@ int IsPairConflict(int index, CommitId cid)
 
 	proc=(PROC*)((char*)procbase+offset);
 
-	// add lock to access.
+	/* add lock to access. */
 	pthread_spin_lock(&ProcArrayElemLock[index]);
 	conflict=(cid > proc->sid_min)?0:1;
 	pthread_spin_unlock(&ProcArrayElemLock[index]);
@@ -171,7 +170,8 @@ int UpdateProcStartId(int index,CommitId cid)
 	Size offset;
 
 	offset=index*sizeof(PROC);
-	proc=(PROC*)(procbase+index);	
+
+	proc=(PROC*)((char*)procbase+offset);
 
 	if(cid > proc->sid_min)
 	{
@@ -179,7 +179,7 @@ int UpdateProcStartId(int index,CommitId cid)
 	}
 	else
 	{
-		// current transaction has to rollback.
+		/* current transaction has to roll back. */
 		return 0;
 	}
 
@@ -201,6 +201,7 @@ int UpdateProcCommitId(int index,StartId sid)
 	offset=index*sizeof(PROC);
 
 	proc=(PROC*)((char*)procbase+offset);
+
 	proc->cid_min = (sid > proc->cid_min) ? sid : proc->cid_min;
 
 	return 0;
@@ -219,14 +220,14 @@ int AtRead_UpdateProcId(int index, StartId sid_min)
 
 	proc=(PROC*)((char*)procbase+offset);
 
-	// add lock to access.
 	pthread_spin_lock(&ProcArrayElemLock[index]);
 
 	proc->sid_min=sid_min;
 
-	// update the 'cid_min'.
+	/* update the 'cid_min'. */
 	if(proc->cid_min < sid_min)
 		proc->cid_min = sid_min;
+
 	pthread_spin_unlock(&ProcArrayElemLock[index]);
 	return 0;
 }
@@ -246,7 +247,9 @@ CommitId GetTransactionCidMin(int index)
 StartId GetTransactionSidMin(int index)
 {
 	StartId sid_min;
+
 	sid_min=(procbase+index)->sid_min;
+
 	return sid_min;
 }
 
@@ -254,7 +257,7 @@ StartId GetTransactionSidMax(int index)
 {
 	StartId sid_max;
 
-	// add lock to access.
+	/* add lock to access. */
 	pthread_spin_lock(&ProcArrayElemLock[index]);
 	sid_max=(procbase+index)->sid_max;
 	pthread_spin_unlock(&ProcArrayElemLock[index]);
@@ -272,18 +275,15 @@ void AtEnd_ProcArray(int index)
 	lindex=GetLocalIndex(index);
 
 	PROC* proc;
-	proc=(PROC*)(procbase+lindex);
+	proc=procbase+lindex;
 
-	// add lock to access.
+	/* add lock to access. */
 	pthread_spin_lock(&ProcArrayElemLock[lindex]);
 
 	proc->cid_min=0;
 	proc->sid_min=0;
 	proc->sid_max=MAXINTVALUE;
 	proc->tid=InvalidTransactionId;
-
-	proc->cid=0;
-	proc->complete=0;
 
 	pthread_spin_unlock(&ProcArrayElemLock[lindex]);
 }
@@ -295,23 +295,19 @@ void AtEnd_ProcArray(int index)
 bool IsTransactionActive(int index, TransactionId tid, bool IsRead, StartId* sid, CommitId* cid)
 {
 	int status;
-	int lindex;
 	int nid;
 
 	TransactionData* tdata;
 	THREAD* threadinfo;
-
+	uint64_t * buffer;
 	TransactionId self_tid;
 	int self_index;
-
-	uint64_t* buffer;
-
+    int lindex;
 	tdata=(TransactionData*)pthread_getspecific(TransactionDataKey);
 	threadinfo=(THREAD*)pthread_getspecific(ThreadInfoKey);
 
 	self_tid=tdata->tid;
 	self_index=threadinfo->index;
-
 	lindex = GetLocalIndex(self_index);
     nid = GetNodeId(index);
 
@@ -319,7 +315,7 @@ bool IsTransactionActive(int index, TransactionId tid, bool IsRead, StartId* sid
 		printf("insert collision send error\n");
 	if (Recv(lindex, nid, 3) == -1)
 		printf("insert collision recv error\n");
-
+		
 	buffer=(uint64_t*)recv_buffer[lindex];
 
 	status=(int)buffer[0];
@@ -333,7 +329,7 @@ bool IsTransactionActive(int index, TransactionId tid, bool IsRead, StartId* sid
 }
 
 /*
- * @return: '0' to rollback, '1' to continue.
+ * @return: '0' to roll back, '1' to continue.
  */
 int ForceUpdateProcSidMax(int index, CommitId cid)
 {
@@ -352,7 +348,9 @@ int ForceUpdateProcSidMax(int index, CommitId cid)
 	{
 		return 0;
 	}
+
 	proc->sid_max=(proc->sid_max > cid) ? cid : proc->sid_max;
+
 	return 1;
 }
 
@@ -371,9 +369,7 @@ int MVCCUpdateProcId(int index, StartId sid_min, CommitId cid_min)
 		proc->cid_min=cid_min;
 
 	if(proc->sid_min > proc->sid_max)
-    {
 		return 0;
-    }
 
 	return 1;
 }
@@ -387,6 +383,7 @@ int ForceUpdateProcCidMin(int index, StartId sid)
 	lindex=GetLocalIndex(index);
 
 	proc=(PROC*)(procbase+lindex);
+
 	proc->cid_min = (sid > proc->cid_min) ? sid : proc->cid_min;
 
 	return 1;

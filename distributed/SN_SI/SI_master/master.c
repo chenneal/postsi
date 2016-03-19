@@ -316,15 +316,12 @@ void* MasterRespond(void *pargu)
    	    switch(type)
    	    {
    	       case cmd_starttransaction:
-   	    	   printf("enter start transaction\n");
    	    	   ProcessStartTransaction(mrecv_buffer[index], conn, index);
    	    	   break;
    	       case cmd_getendtimestamp:
-   	   	       printf("enter get end time stamp\n");
    	    	   ProcessEndTimestamp(mrecv_buffer[index], conn, index);
    	    	   break;
    	       case cmd_updateprocarray:
-   	    	   printf("enter update procarray\n");
    	    	   ProcessUpdateProcarray(mrecv_buffer[index], conn, index);
    	    	   break;
    	       case cmd_release_master:

@@ -4,7 +4,6 @@
  *  Created on: Dec 2, 2015
  *      Author: xiaoxin
  */
-
 /*
  * interface to operations about locks on ProcArray and InvisibleTable.
  */
@@ -12,19 +11,16 @@
 #include"lock.h"
 #include"socket.h"
 
-// lock to access 'proccommit'.
+/* lock to access 'proccommit'. */
 pthread_rwlock_t ProcCommitLock;
 
-// to make sure that at most one transaction commits at the same time.
+/* to make sure that at most one transaction commits at the same time. */
 pthread_rwlock_t CommitProcArrayLock;
 
-// spin-lock is enough.
+/* spin-lock is enough. */
 pthread_spinlock_t * ProcArrayElemLock;
 
-/*
- * initialize the lock on ProcArray and Invisible.
- */
-
+/* initialize the lock on ProcArray and Invisible. */
 void InitProcLock(void)
 {
 	int i;
@@ -41,20 +37,17 @@ void InitTransactionLock(void)
 	pthread_rwlockattr_t attr;
 	pthread_rwlockattr_init(&attr);
 	pthread_rwlockattr_setpshared(&attr, PTHREAD_PROCESS_SHARED);
-	// ProcArray
 	pthread_rwlock_init(&CommitProcArrayLock, &attr);
-
-	// ProcCommit
 	pthread_rwlock_init(&ProcCommitLock, &attr);
 }
 
 void InitStorageLock(void)
 {
-	int i;
 	pthread_rwlockattr_t attr;
 	pthread_rwlockattr_init(&attr);
 	pthread_rwlockattr_setpshared(&attr, PTHREAD_PROCESS_SHARED);
 }
+
 /*
  * interface to hold the read-write-lock.
  */
@@ -77,5 +70,3 @@ void ReleaseWrLock(pthread_rwlock_t* lock)
 {
 	pthread_rwlock_unlock(lock);
 }
-
-

@@ -77,7 +77,7 @@ void InitParam(void)
     int port = param_port;
 	/* use the TCP protocol */
 	master_sockfd = socket(AF_INET, SOCK_STREAM, 0);
-	//bind
+	// bind
 	struct sockaddr_in mastersock_addr;
 	memset(&mastersock_addr, 0, sizeof(mastersock_addr));
 	mastersock_addr.sin_family = AF_INET;

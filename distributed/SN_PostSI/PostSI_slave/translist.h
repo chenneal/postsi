@@ -10,8 +10,10 @@
 
 #include"data.h"
 #include"proc.h"
+#include"socket.h"
 
-#define READLISTMAX 150
+#define READLISTMAX 128
+
 #define READLISTTABLEMAX RECORDNUM
 #define WRITELISTTABLEMAX RECORDNUM
 
@@ -32,11 +34,8 @@ extern int WriteListReadindex(int tableid, int h);
 extern void WriteListDelete(int tableid, int h);
 
 extern void InitTransactionList(void);
-
 extern void InitReadListMemAlloc(void);
-
 extern void InitReadListMem(void);
-
 extern void MergeReadList(uint64_t* buffer);
 
 #endif /* TRANSLIST_H_ */
