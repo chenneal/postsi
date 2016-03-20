@@ -12,7 +12,7 @@
   <body>
     <section class="page-header">
       <h1 class="project-name">PostSI</h1>
-      <h2 class="project-tagline">A new SI mechanism database</h2>
+      <h2 class="project-tagline">A scalable mechanism for Snapshot Isolation</h2>
       <a href="https://github.com/jlumqz/postsi" class="btn">View on GitHub</a>
       <a href="https://github.com/jlumqz/postsi/zipball/master" class="btn">Download .zip</a>
       <a href="https://github.com/jlumqz/postsi/tarball/master" class="btn">Download .tar.gz</a>
@@ -22,25 +22,26 @@
       <h2>
 <a id="introduction" class="anchor" href="#introduction" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Introduction</h2>
 
-<p>We implemented the PostSI schedulers in both Single-machine with Shared-Everything(SE) architectures and MPP platform with Shared-Nothing(SN) architectures, and for comparison purpose, we implemented two conventional SI schedulers for the SE and SN architectures respectively. To run the code, Linux operating system and GCC compiler are needed. You can view our code in <a href="https://github.com/jlumqz/postsi.git">GitHub</a></p>
+<p>We implemented two PostSI schedulers, one for a single server with an Shared-Everything (SE) architecture, one for MPP platforms based with an Shared-Nothing(SN) architecture. For comparison purpose, we also implemented two conventional SI schedulers for the SE and SN architectures respectively. You can view our source code in <a href="https://github.com/jlumqz/postsi.git">GitHub</a>. The code works only with the Linux operating system and the GCC compiler.</p>
 
 <h2>
-<a id="get-the-code" class="anchor" href="#get-the-code" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Get the code</h2>
+<a id="the-code" class="anchor" href="#the-code" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>The Code</h2>
 
-<p>You can get our code from the master branch of our postsi repository. Simply use the single command below:</p>
+<p>You can download our code from the master branch of our postsi repository, simply using the command below:</p>
 
 <pre><code>git clone https://github.com/jlumqz/postsi.git
 </code></pre>
 
 <h2>
-<a id="stand-alone-installation" class="anchor" href="#stand-alone-installation" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Stand-alone Installation</h2>
+<a id="single-server-installation" class="anchor" href="#single-server-installation" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Single-Server Installation</h2>
 
-<p>The single-machine version is easy to install, you only need find the right directory and compile the source code. You can just use a few command below to complete the installation：</p>
+<p>The single-machine versions are easy to install. You can just use the commands below to complete the installation.</p>
 
 <h3>
-<a id="conventional-snapshot-isolation" class="anchor" href="#conventional-snapshot-isolation" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Conventional Snapshot Isolation</h3>
+<a id="the-version-of-conventional-snapshot-isolation" class="anchor" href="#the-version-of-conventional-snapshot-isolation" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>The Version of Conventional Snapshot Isolation</h3>
 
-<p>find directory </p>
+<h4>
+<a id="find-the-directory" class="anchor" href="#find-the-directory" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>find the directory</h4>
 
 <pre><code>cd postsi
 
@@ -49,7 +50,8 @@ cd stand-alone
 cd SE_SI
 </code></pre>
 
-<p>compile &amp;&amp; run</p>
+<h4>
+<a id="compile--run" class="anchor" href="#compile--run" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>compile &amp;&amp; run</h4>
 
 <pre><code>make
 
@@ -57,11 +59,12 @@ cd SE_SI
 </code></pre>
 
 <h3>
-<a id="posterior-snapshot-isolation" class="anchor" href="#posterior-snapshot-isolation" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Posterior Snapshot Isolation</h3>
+<a id="the-version-of-posterior-snapshot-isolation" class="anchor" href="#the-version-of-posterior-snapshot-isolation" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>The Version of Posterior Snapshot Isolation</h3>
 
 <p>The PostSI have the similar steps as above:</p>
 
-<p>find directory </p>
+<h4>
+<a id="find-the-directory-1" class="anchor" href="#find-the-directory-1" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>find the directory</h4>
 
 <pre><code>cd postsi
 
@@ -70,7 +73,8 @@ cd stand-alone
 cd SE_PostSI
 </code></pre>
 
-<p>compile &amp;&amp; run</p>
+<h4>
+<a id="compile--run-1" class="anchor" href="#compile--run-1" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>compile &amp;&amp; run</h4>
 
 <pre><code>make
 
@@ -78,23 +82,24 @@ cd SE_PostSI
 </code></pre>
 
 <h2>
-<a id="distributed-installation" class="anchor" href="#distributed-installation" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Distributed Installation</h2>
+<a id="mpp-installation" class="anchor" href="#mpp-installation" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>MPP Installation</h2>
 
-<p>Before install the distributed version, you'd better know the list below:</p>
+<p>Each distributed version is composed of a master program and a slave program:</p>
 
 <ul>
-<li><p>Two versions both have two directory of slave and the master, which contains the source code file, you should compile them separately.</p></li>
-<li><p>Before run the slave nodes, you should run the master node firstly. The order here should never be changed, otherwise the slave can not start-up normally.</p></li>
-<li><p>You can run the two versions of distributed system either in stand-alone environment( use loop IP address ) or in cluster environment. The Only thing you need to do is to configure the <code>config.txt</code>.</p></li>
+<li><p>The source code of the slave and the master are located in different directories. You need to compile them separately.</p></li>
+<li><p>Before running the slave nodes, you must run the master node firstly. This order cannot be changed. Or the slave will not start normally.</p></li>
+<li><p>You can run the two MPP versions either in a single-machine environment (using loop IP address) or in a cluster environment. The switch the environment, you need to configure the <code>config.txt</code> file.</p></li>
 </ul>
 
 <h3>
-<a id="conventional-snapshot-isolation-1" class="anchor" href="#conventional-snapshot-isolation-1" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Conventional Snapshot Isolation</h3>
+<a id="the-version-of-conventional-snapshot-isolation-1" class="anchor" href="#the-version-of-conventional-snapshot-isolation-1" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>The Version of Conventional Snapshot Isolation</h3>
 
 <h4>
 <a id="master" class="anchor" href="#master" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>master</h4>
 
-<p>find directory</p>
+<h5>
+<a id="find-the-directory-2" class="anchor" href="#find-the-directory-2" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>find the directory</h5>
 
 <pre><code>cd postsi
 
@@ -105,7 +110,8 @@ cd SN_SI
 cd SN_master
 </code></pre>
 
-<p>compile &amp;&amp; run</p>
+<h5>
+<a id="compile--run-2" class="anchor" href="#compile--run-2" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>compile &amp;&amp; run</h5>
 
 <pre><code>make
 
@@ -115,7 +121,8 @@ cd SN_master
 <h4>
 <a id="slave" class="anchor" href="#slave" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>slave</h4>
 
-<p>find directory</p>
+<h5>
+<a id="find-directory" class="anchor" href="#find-directory" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>find directory</h5>
 
 <pre><code>cd postsi
 
@@ -126,7 +133,8 @@ cd SN_SI
 cd SI_slave
 </code></pre>
 
-<p>compile &amp;&amp; run</p>
+<h5>
+<a id="compile--run-3" class="anchor" href="#compile--run-3" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>compile &amp;&amp; run</h5>
 
 <pre><code>make
 
@@ -134,12 +142,13 @@ cd SI_slave
 </code></pre>
 
 <h3>
-<a id="posterior-snapshot-isolation-1" class="anchor" href="#posterior-snapshot-isolation-1" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Posterior Snapshot Isolation</h3>
+<a id="the-version-for-posterior-snapshot-isolation" class="anchor" href="#the-version-for-posterior-snapshot-isolation" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>The Version for Posterior Snapshot Isolation</h3>
 
 <h4>
 <a id="master-1" class="anchor" href="#master-1" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>master</h4>
 
-<p>find directory</p>
+<h5>
+<a id="find-directory-1" class="anchor" href="#find-directory-1" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>find directory</h5>
 
 <pre><code>cd postsi
 
@@ -150,7 +159,8 @@ cd SN_PostSI
 cd PostSI_master
 </code></pre>
 
-<p>compile &amp;&amp; run</p>
+<h5>
+<a id="compile--run-4" class="anchor" href="#compile--run-4" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>compile &amp;&amp; run</h5>
 
 <pre><code>make
 
@@ -160,7 +170,8 @@ cd PostSI_master
 <h4>
 <a id="slave-1" class="anchor" href="#slave-1" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>slave</h4>
 
-<p>find directory</p>
+<h5>
+<a id="find-directory-2" class="anchor" href="#find-directory-2" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>find directory</h5>
 
 <pre><code>cd postsi
 
@@ -171,14 +182,15 @@ cd SN_SI
 cd PostSI_slave
 </code></pre>
 
-<p>compile &amp;&amp; run</p>
+<h5>
+<a id="compile--run-5" class="anchor" href="#compile--run-5" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>compile &amp;&amp; run</h5>
 
 <pre><code>make
 
 ./slave
 </code></pre>
 
-<p>If you are confused in details, please look up the README.md in corresponding directory. </p>
+<p>Details can be found in the README.md of the GitHub repository.  </p>
 
 <p>Have fun :)</p>
 
