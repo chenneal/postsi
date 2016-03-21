@@ -200,7 +200,6 @@ int CommitTransaction(void)
 
 	if(!ConfirmIdAssign(&sid, &cid))
 	{
-		//printf("TID:%d, sid:%d, cid:%d\n",tid, sid, cid);
 		confirm=false;
 	}
 	
@@ -469,13 +468,11 @@ int ConfirmIdAssign(StartId* sid, CommitId* cid)
 	pthread_spin_lock(&ProcArrayElemLock[lindex]);
 	if(*sid > proc->sid_max)
 	{
-		//abort current transaction.
 		pthread_spin_unlock(&ProcArrayElemLock[lindex]);
 		return 0;
 	}
 
 	*cid=(proc->cid_min > (*cid))?proc->cid_min:(*cid);
-	//assert(*cid >= *sid);
 
 	*cid=((*sid+1) > *cid) ? (*sid+1) : *cid;
 

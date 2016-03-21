@@ -1,19 +1,20 @@
 ## Introduction
-We implemented the PostSI schedulers in both Single-machine with Shared-Everything(SE) architectures and MPP platform with Shared-Nothing(SN) architectures, and for comparison purpose, we implemented two conventional SI schedulers for the SE and SN architectures respectively. To run the code, Linux operating system and GCC compiler are needed. You can view our code in [GitHub](https://github.com/jlumqz/postsi.git)
+We implemented two PostSI schedulers, one for a single server with an Shared-Everything (SE) architecture, one for MPP platforms based with an Shared-Nothing(SN) architecture. For comparison purpose, we also implemented two conventional SI schedulers for the SE and SN architectures respectively. You can view our source code in [GitHub](https://github.com/jlumqz/postsi.git). The code works only with the Linux operating system and the GCC compiler.
 
-## Get the code
-You can get our code from the master branch of our postsi repository. Simply use the single command below:
+
+## The Code
+You can download our code from the master branch of our postsi repository, simply using the command below:
 ```
 git clone https://github.com/jlumqz/postsi.git
 ```
 
-## Stand-alone Installation
+## Single-Server Installation
 
-The single-machine version is easy to install, you only need find the right directory and compile the source code. You can just use a few command below to complete the installation：
+The single-machine versions are easy to install. You can just use the commands below to complete the installation.
 
-### Conventional Snapshot Isolation
+### The Version of Conventional Snapshot Isolation
 
-find directory 
+#### find the directory
 ```
 cd postsi
 
@@ -21,18 +22,18 @@ cd stand-alone
 
 cd SE_SI
 ```
-compile && run
+#### compile && run
 ```
 make
 
 ./SI
 ```
 
-### Posterior Snapshot Isolation
+### The Version of Posterior Snapshot Isolation
 
 The PostSI have the similar steps as above:
 
-find directory 
+#### find the directory 
 ```
 cd postsi
 
@@ -40,28 +41,28 @@ cd stand-alone
 
 cd SE_PostSI
 ```
-compile && run
+#### compile && run
 ```
 make
 
 ./PSI
 ```
 
-## Distributed Installation 
+## MPP Installation 
 
-Before install the distributed version, you'd better know the list below:
+Each distributed version is composed of a master program and a slave program:
 
-+ Two versions both have two directory of slave and the master, which contains the source code file, you should compile them separately.
++ The source code of the slave and the master are located in different directories. You need to compile them separately.
 
-+ Before run the slave nodes, you should run the master node firstly. The order here should never be changed, otherwise the slave can not start-up normally.
++ Before running the slave nodes, you must run the master node firstly. This order cannot be changed. Or the slave will not start normally.
 
-+ You can run the two versions of distributed system either in stand-alone environment( use loop IP address ) or in cluster environment. The Only thing you need to do is to configure the `config.txt`.
++ You can run the two MPP versions either in a single-machine environment (using loop IP address) or in a cluster environment. To switch the environment, you need to configure the `config.txt` file.
 
-### Conventional Snapshot Isolation
+### The Version of Conventional Snapshot Isolation
 
 #### master
 
-find directory
+##### find the directory
 ```
 cd postsi
 
@@ -71,7 +72,7 @@ cd SN_SI
 
 cd SN_master
 ```
-compile && run
+##### compile && run
 ```
 make
 
@@ -80,7 +81,7 @@ make
 
 #### slave
 
-find directory
+##### find directory
 ```
 cd postsi
 
@@ -90,18 +91,18 @@ cd SN_SI
 
 cd SI_slave
 ```
-compile && run
+##### compile && run
 ```
 make
 
 ./slave
 ```
 
-### Posterior Snapshot Isolation
+### The Version for Posterior Snapshot Isolation
 
 #### master
 
-find directory
+##### find directory
 ```
 cd postsi
 
@@ -111,7 +112,7 @@ cd SN_PostSI
 
 cd PostSI_master
 ```
-compile && run
+##### compile && run
 ```
 make
 
@@ -120,7 +121,7 @@ make
 
 #### slave
 
-find directory
+##### find directory
 ```
 cd postsi
 
@@ -130,13 +131,13 @@ cd SN_SI
 
 cd PostSI_slave
 ```
-compile && run
+##### compile && run
 ```
 make
 
 ./slave
 ```
 
-If you are confused in details, please look up the README.md in corresponding directory. 
+Details can be found in the README.md of the GitHub repository.  
 
 Have fun :)
